@@ -18,38 +18,59 @@ Nocturne/
 └── shop-web/        React + Vite UI
 ```
 
-## Требования
-
-- Docker и Docker Compose v2
-- Go 1.26+ — только если запускаете сервисы вне Docker
-
 ## Быстрый старт
 
-Из корня монорепо:
+### 1. Требования
+
+- Docker и Docker Compose v2
+
+### 2. Запуск (из корня монорепо)
 
 ```bash
-make init      # .env из шаблонов (shop-infra + сервисы)
+make init      # .env и env/*.env из шаблонов (первый раз)
 make up        # postgres + все сервисы + bff + web
-make migrate   # миграции БД (после первого up, когда postgres готов)
+make migrate   # миграции БД (после up, когда postgres готов)
 ```
 
-Или из `shop-infra` напрямую — те же команды, см. [shop-infra/README.md](shop-infra/README.md).
+Первый `make up` может занять несколько минут — идёт сборка образов.
 
-После запуска:
+Остановка:
 
-| Что | URL |
-|-----|-----|
-| UI | http://localhost:3000 |
-| BFF (HTTP API) | http://localhost:8090/health |
-| Adminer (БД) | http://localhost:8089 |
-| Envoy (gRPC gateway) | `:443` |
+```bash
+make down
+```
 
-### Checkout flow (E2E)
+### 3. Проверка, что всё работает
 
-1. Регистрация / логин на http://localhost:3000
-2. Добавить товары в корзину
-3. Оформить заказ (`CreateOrder`)
-4. Оплатить или отменить заказ
+| Что проверить | URL | Ожидаемый результат |
+|---------------|-----|---------------------|
+| BFF жив | http://localhost:8090/health | `{"status":"ok"}` |
+| Каталог (API) | http://localhost:8090/api/v1/products | JSON со списком товаров |
+| UI магазина | http://localhost:3000 | Страница каталога Nocturne |
+| Adminer (БД) | http://localhost:8089 | Вход: `shop` / `shop` |
+
+Через терминал:
+
+```bash
+curl http://localhost:8090/health
+curl http://localhost:8090/api/v1/products
+```
+
+> BFF — JSON API, не веб-страница. На http://localhost:8090/ будет 404 — это нормально.  
+> BFF с хоста на порту **8090** (`BFF_HTTP_PORT` в `shop-infra/.env`). UI на `:3000` ходит в BFF через docker-сеть.
+
+### 4. Попробовать сценарий
+
+1. Открыть http://localhost:3000
+2. Зарегистрироваться / войти
+3. Добавить товар в корзину
+4. Оформить заказ → оплатить или отменить
+
+Подробнее: [shop-infra/README.md](shop-infra/README.md)
+
+## Требования (локальная разработка)
+
+- Go 1.26+ — только если запускаете сервисы вне Docker
 
 ## Команды (корень)
 
