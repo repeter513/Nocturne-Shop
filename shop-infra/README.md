@@ -18,7 +18,7 @@ Docker Compose для локального запуска всего магаз�
 - **BFF + web:** без портов на хост — трафик через Envoy
 - **Gateway:** `envoy/envoy.yaml` — `/` → web, `/api/` → BFF, gRPC по authority на `:8443`
 - **Init:** `postgres/init` создаёт БД
-- **Env-шаблоны:** `.env.example` и `env/*.env.example`
+- **Env-шаблоны:** `.env.example` и `env/*.env.example` — фиктивные значения, чтобы было понятно, что куда подставлять.
 
 ## Структура repos
 
@@ -97,7 +97,7 @@ DATABASE_URL=postgres://shop:shop@postgres:5432/order_db?sslmode=disable
 CART_GRPC_ADDR=cart:8083
 CATALOG_GRPC_ADDR=catalog:8082
 PAYMENT_GRPC_ADDR=payment:8086
-JWT_SECRET=<тот же base64, что в auth>
+JWT_SECRET=ZGV2LXNlY3JldC1jaGFuZ2UtbWU=
 ```
 
 ## Докуменция сервисов
