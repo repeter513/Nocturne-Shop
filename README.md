@@ -56,7 +56,7 @@ curl http://localhost:8090/health
 curl http://localhost:8090/api/v1/products
 ```
 
-> Порт `:8090` занят? Задайте `ENVOY_HTTP_PORT=8888` в `shop-infra/.env` и перезапустите стек.
+
 
 ### 4. Попробовать сценарий
 
