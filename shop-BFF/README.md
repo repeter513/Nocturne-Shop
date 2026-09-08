@@ -4,7 +4,7 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 
 **Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](README.md) · [web](../shop-web/README.md)
 
-Локальный стек: [shop-infra](../shop-infra/README.md) (HTTP порт `8080`, env: [`env/bff.env.example`](../shop-infra/env/bff.env.example))
+Локальный стек: [shop-infra](../shop-infra/README.md) (host `:8090`, env: [`env/bff.env.example`](../shop-infra/env/bff.env.example))
 
 ## Стек
 
@@ -27,7 +27,8 @@ go run ./cmd/server
 cd ../shop-infra && make up
 ```
 
-BFF слушает `:8080`. Фронт на `:3000` проксирует `/api/` сюда.
+BFF с host: http://localhost:8090 (внутри контейнера `:8080`, снаружи `BFF_HTTP_PORT=8090`).  
+Фронт на `:3000` проксирует `/api/` на BFF через docker-сеть.
 
 ## API
 

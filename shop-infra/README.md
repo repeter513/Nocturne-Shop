@@ -12,14 +12,14 @@ Docker Compose для локального запуска всего магаз�
 | [shop-cart](../shop-cart/README.md) | cart | `8083` |
 | [shop-order](../shop-order/README.md) | order | `8084` |
 | [shop-payment](../shop-payment/README.md) | payment | `8086` |
-| [shop-BFF](../shop-BFF/README.md) | HTTP API для фронта | `8080` |
+| [shop-BFF](../shop-BFF/README.md) | HTTP API для фронта | `8090` (host) |
 | [shop-web](../shop-web/README.md) | фронт (nginx) | `3000` |
 
 ## Что внутри
 
 - **Инфра:** PostgreSQL 16, Adminer
 - **Сервисы:** auth, catalog, cart, order, payment (build из соседних папок монорепо)
-- **BFF + web:** HTTP API на `:8080`, UI на `:3000`
+- **BFF + web:** HTTP API на host `:8090` (внутри контейнера `:8080`), UI на `:3000`
 - **Gateway:** Envoy — единая точка входа gRPC на `:443` (конфиг: `envoy/envoy.yaml`)
 - **Init:** `postgres/init` создаёт БД
 - **Env-шаблоны:** `.env.example` и `env/*.env.example`
@@ -55,7 +55,7 @@ make migrate   # миграции всех сервисов (после up, ко
 `make up` и `make infra-up` сами вызывают `make env`, если файлов ещё нет.
 
 UI: http://localhost:3000  
-BFF: http://localhost:8080
+BFF: http://localhost:8090/health
 
 Только инфра (без сервисов):
 

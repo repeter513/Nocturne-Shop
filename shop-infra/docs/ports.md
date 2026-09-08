@@ -3,7 +3,7 @@
 | Сервис | Порт (host) | URL |
 |--------|-------------|-----|
 | web | 3000 | http://localhost:3000 |
-| bff | 8080 | http://localhost:8080 |
+| bff | 8090 | http://localhost:8090 |
 | envoy (gRPC gateway) | 443 | grpc://localhost:443 |
 | envoy admin | 9901 | http://localhost:9901 |
 | auth | 8081 | grpc://localhost:8081 |

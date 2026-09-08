@@ -40,7 +40,7 @@ make migrate   # миграции БД (после первого up, когда
 | Что | URL |
 |-----|-----|
 | UI | http://localhost:3000 |
-| BFF (HTTP API) | http://localhost:8080 |
+| BFF (HTTP API) | http://localhost:8090/health |
 | Adminer (БД) | http://localhost:8089 |
 | Envoy (gRPC gateway) | `:443` |
 
@@ -66,7 +66,7 @@ make migrate   # миграции БД (после первого up, когда
 
 | Сервис | Порт |
 |--------|------|
-| shop-BFF | 8080 |
+| shop-BFF | 8090 (host) → 8080 (контейнер) |
 | shop-auth | 8081 |
 | shop-catalog | 8082 |
 | shop-cart | 8083 |
@@ -81,7 +81,7 @@ make migrate   # миграции БД (после первого up, когда
 
 ```mermaid
 flowchart LR
-  Web[shop-web :3000] --> BFF[shop-BFF :8080]
+  Web[shop-web :3000] --> BFF[shop-BFF :8090 host]
   BFF --> Auth[shop-auth]
   BFF --> Catalog[shop-catalog]
   BFF --> Cart[shop-cart]

@@ -33,11 +33,12 @@ API: HTTP [shop-BFF](../shop-BFF/README.md) (`/api/v1`).
 cd ../shop-infra && make up
 ```
 
-Открыть http://localhost:3000. Nginx проксирует `/api/` на [shop-BFF](../shop-BFF/README.md) `:8080`.
+Открыть http://localhost:3000. Nginx проксирует `/api/` на BFF внутри docker-сети (`bff:8080`).  
+Проверка BFF с хоста: http://localhost:8090/health
 
 ### Локально (dev)
 
-Нужен запущенный BFF. Vite проксирует `/api/v1` на `http://localhost:8090` — у BFF поставь `HTTP_PORT=8090` (в compose BFF на `8080`).
+Нужен запущенный BFF. Vite проксирует `/api/v1` на `http://localhost:8090` — тот же порт, что `BFF_HTTP_PORT` в compose.
 
 ```bash
 cp .env.example .env
