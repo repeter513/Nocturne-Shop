@@ -57,10 +57,7 @@ services:
         condition: service_healthy
 
   order:
-    build:
-      context: ../shop-order
-      additional_contexts:
-        shop-proto: ../shop-proto
+    build: ../shop-order
     env_file:
       - ../shop-order/.env
       - env/order.env
@@ -88,10 +85,7 @@ services:
         condition: service_healthy
 
   bff:
-    build:
-      context: ../shop-BFF
-      additional_contexts:
-        shop-proto: ../shop-proto
+    build: ../shop-BFF
     env_file:
       - ../shop-BFF/.env
       - env/bff.env
