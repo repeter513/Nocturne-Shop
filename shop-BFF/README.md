@@ -6,8 +6,8 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 
 В compose **нет порта на хост** — HTTP API доступен через [Envoy](../shop-infra/envoy/envoy.yaml):
 
-- http://localhost:8080/health
-- http://localhost:8080/api/v1/...
+- http://localhost:8090/health
+- http://localhost:8090/api/v1/...
 
 ## Стек
 
@@ -22,7 +22,7 @@ cp .env.example .env
 go run ./cmd/server
 ```
 
-Слушает `:8080` (или `HTTP_PORT`). Для `npm run dev` фронта нужен также Envoy или прямой прокси Vite на этот порт.
+Слушает `:8080` внутри контейнера (`HTTP_PORT`). С хоста — через Envoy `:8090`.
 
 ## Docker (через shop-infra)
 

@@ -46,21 +46,21 @@ make down
 
 | Что проверить | URL | Ожидаемый результат |
 |---------------|-----|---------------------|
-| UI магазина | http://localhost:8080 | Страница каталога Nocturne |
-| BFF health | http://localhost:8080/health | `{"status":"ok"}` |
-| Каталог (API) | http://localhost:8080/api/v1/products | JSON со списком товаров |
+| UI магазина | http://localhost:8090 | Страница каталога Nocturne |
+| BFF health | http://localhost:8090/health | `{"status":"ok"}` |
+| Каталог (API) | http://localhost:8090/api/v1/products | JSON со списком товаров |
 | Adminer (БД) | http://localhost:8089 | Вход: `shop` / `shop` |
 
 ```bash
-curl http://localhost:8080/health
-curl http://localhost:8080/api/v1/products
+curl http://localhost:8090/health
+curl http://localhost:8090/api/v1/products
 ```
 
-> Порт `:8080` занят? Задайте `ENVOY_HTTP_PORT=8888` в `shop-infra/.env` и перезапустите стек.
+> Порт `:8090` занят? Задайте `ENVOY_HTTP_PORT=8888` в `shop-infra/.env` и перезапустите стек.
 
 ### 4. Попробовать сценарий
 
-1. Открыть http://localhost:8080
+1. Открыть http://localhost:8090
 2. Зарегистрироваться / войти
 3. Добавить товар в корзину
 4. Оформить заказ → оплатить или отменить
@@ -86,7 +86,7 @@ curl http://localhost:8080/api/v1/products
 
 | Сервис | Порт |
 |--------|------|
-| **Envoy (UI + API)** | 8080 |
+| **Envoy (UI + API)** | 8090 |
 | Envoy gRPC gateway | 8443 |
 | Adminer | 8089 |
 | PostgreSQL | 5432 |
@@ -97,7 +97,7 @@ curl http://localhost:8080/api/v1/products
 
 ```mermaid
 flowchart LR
-  Browser --> Envoy[Envoy :8080]
+  Browser --> Envoy[Envoy :8090]
   Envoy -->|"/"| Web[shop-web]
   Envoy -->|"/api/"| BFF[shop-BFF]
   BFF --> Auth[shop-auth]

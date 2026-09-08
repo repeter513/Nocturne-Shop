@@ -4,9 +4,9 @@
 
 | Сервис | Порт (host) | URL |
 |--------|-------------|-----|
-| **shop (UI + API)** | 8080 | http://localhost:8080 |
-| BFF health | 8080 | http://localhost:8080/health |
-| API | 8080 | http://localhost:8080/api/v1/... |
+| **shop (UI + API)** | 8090 | http://localhost:8090 |
+| BFF health | 8090 | http://localhost:8090/health |
+| API | 8090 | http://localhost:8090/api/v1/... |
 | envoy (gRPC gateway) | 8443 | grpc через authority (см. ниже) |
 | envoy admin | 9901 | http://localhost:9901 |
 | PostgreSQL | 5432 | postgres://shop:shop@localhost:5432 |
@@ -18,7 +18,7 @@ gRPC-сервисы с хоста не проброшены — только ч�
 grpcurl -plaintext -authority catalog.local localhost:8443 list
 ```
 
-Порт `:8080` настраивается через `ENVOY_HTTP_PORT` в `shop-infra/.env`.
+Порт `:8090` настраивается через `ENVOY_HTTP_PORT` в `shop-infra/.env`.
 
 ## Базы данных
 

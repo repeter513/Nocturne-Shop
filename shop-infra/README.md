@@ -6,7 +6,7 @@ Docker Compose для локального запуска всего магаз�
 
 | Компонент | Роль | Доступ с хоста |
 |-----------|------|----------------|
-| **Envoy** | UI + HTTP API + gRPC gateway | `:8080`, `:8443` |
+| **Envoy** | UI + HTTP API + gRPC gateway | `:8090`, `:8443` |
 | [shop-web](../shop-web/README.md) | React (статика) | через Envoy `/` |
 | [shop-BFF](../shop-BFF/README.md) | HTTP JSON API | через Envoy `/api/` |
 | gRPC-сервисы | auth, catalog, cart, order, payment | через Envoy `:8443` |
@@ -47,8 +47,8 @@ make up        # postgres + сервисы + bff + web + envoy (--build)
 make migrate   # миграции (после up)
 ```
 
-**Магазин:** http://localhost:8080  
-**Health BFF:** http://localhost:8080/health  
+**Магазин:** http://localhost:8090  
+**Health BFF:** http://localhost:8090/health  
 **Adminer:** http://localhost:8089
 
 Только инфра (без сервисов):
@@ -59,7 +59,7 @@ make infra-up
 
 ### Checkout flow (E2E)
 
-1. http://localhost:8080 — регистрация / логин
+1. http://localhost:8090 — регистрация / логин
 2. Добавить товары в корзину
 3. Оформить заказ (`CreateOrder`)
 4. Оплатить или отменить
@@ -80,7 +80,7 @@ make infra-up
 
 | Переменная | Default | Описание |
 |------------|---------|----------|
-| `ENVOY_HTTP_PORT` | `8080` | UI + HTTP API |
+| `ENVOY_HTTP_PORT` | `8090` | UI + HTTP API |
 | `ENVOY_GRPC_PORT` | `8443` | gRPC gateway (host → container :443) |
 | `ENVOY_ADMIN_PORT` | `9901` | Envoy admin |
 | `ADMINER_PORT` | `8089` | Adminer |
