@@ -1,0 +1,130 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:4
+    ports:
+      - "${ADMINER_PORT:-8089}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth:
+    build: ../shop-auth
+    env_file:
+      - ../shop-auth/.env
+      - env/auth.env
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  catalog:
+    build: ../shop-catalog
+    env_file:
+      - ../shop-catalog/.env
+      - env/catalog.env
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cart:
+    build: ../shop-cart
+    env_file:
+      - ../shop-cart/.env
+      - env/cart.env
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  order:
+    build:
+      context: ../shop-order
+      additional_contexts:
+        shop-proto: ../shop-proto
+    env_file:
+      - ../shop-order/.env
+      - env/order.env
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      cart:
+        condition: service_started
+      catalog:
+        condition: service_started
+      payment:
+        condition: service_started
+
+  payment:
+    build: ../shop-payment
+    env_file:
+      - ../shop-payment/.env
+      - env/payment.env
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bff:
+    build:
+      context: ../shop-BFF
+      additional_contexts:
+        shop-proto: ../shop-proto
+    env_file:
+      - ../shop-BFF/.env
+      - env/bff.env
+    ports:
+      - "${BFF_HTTP_PORT:-8080}:8080"
+    depends_on:
+      - auth
+      - catalog
+      - cart
+      - order
+      - payment
+
+  web:
+    build: ../shop-web
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      - bff
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    ports:
+      - "${ENVOY_GRPC_PORT:-443}:443"
+      - "${ENVOY_ADMIN_PORT:-9901}:9901"
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: ["-c", "/etc/envoy/envoy.yaml"]
+    depends_on:
+      - auth
+      - catalog
+      - cart
+      - order
+      - payment
+
+volumes:
+  postgres_data:

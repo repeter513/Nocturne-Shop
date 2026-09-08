@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package catalog.v1;
+
+option go_package = "github.com/repeter513/shop-proto/gen/go/catalog/v1;catalogv1";
+
+
+service CatalogService {
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+  rpc GetStock(GetStockRequest) returns (GetStockResponse);
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+  rpc ConfirmReservation(ConfirmReservationRequest) returns (ConfirmReservationResponse);
+}
+
+message Product {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int64 category_id = 5;
+  bool  active = 6;
+}
+
+message Category {
+  int64 id = 1;
+  string name = 2;
+  int64 parent_id = 3;
+}
+
+message Stock {
+  int64 product_id = 1;
+  int32 quantity = 2;
+}
+
+message GetProductRequest {
+  int64 product_id = 1;
+
+}
+message GetProductResponse {
+  Product product = 1;
+}
+message ListProductsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  int64 category_id = 3;
+}
+message ListProductsResponse {
+  repeated Product products = 1;
+  int32 total_count = 2;
+}
+message ListCategoriesRequest {
+
+}
+message ListCategoriesResponse {
+  repeated Category categories = 1;
+}
+message  GetStockRequest {
+  int64 product_id = 1;
+}
+message GetStockResponse {
+  Stock stock = 1;
+}
+message  ReserveStockRequest {
+  int64 product_id = 1;
+  int32 quantity = 2;
+  int64 order_id = 3;
+}
+message ReserveStockResponse {
+  bool success = 1;
+}
+message ReleaseStockRequest {
+  int64 product_id = 1;
+  int32 quantity = 2;
+  int64 order_id = 3;
+}
+message ReleaseStockResponse {
+  bool success = 1;
+}
+
+message ConfirmReservationRequest {
+  int64 order_id = 1;
+}
+
+message ConfirmReservationResponse {
+  bool success = 1;
+}
+

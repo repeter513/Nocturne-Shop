@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package payment.v1;
+
+option go_package = "github.com/repeter513/shop-proto/gen/go/payment/v1;payment1";
+
+service PaymentService {
+  rpc CreatePayment(CreatePaymentRequest) returns (CreatePaymentResponse);
+  rpc GetPayment(GetPaymentRequest) returns (GetPaymentResponse);
+  rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse);
+}
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_SUCCESS = 2;
+  PAYMENT_STATUS_FAILED = 3;
+}
+
+message Payment {
+  int64 payment_id = 1;
+  int64 order_id = 2;
+  int64 user_id = 3;
+  double amount = 4;
+  PaymentStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message CreatePaymentRequest {
+  int64 order_id = 1;
+  int64 user_id = 2;
+  double amount = 3;
+  bool simulate_failure = 4; // For testing purposes, to simulate a failed payment
+}
+message CreatePaymentResponse {
+  int64 payment_id = 1;
+  PaymentStatus status = 2;
+}
+message GetPaymentRequest {
+  int64 payment_id = 1;
+}
+message GetPaymentResponse {
+  Payment payment = 1;
+}
+message ListPaymentsRequest {
+  int64 user_id = 1;
+  int64  order_id = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+message ListPaymentsResponse {
+  repeated Payment payments = 1;
+  int32 total_count = 2;
+}

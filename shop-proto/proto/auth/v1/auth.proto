@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "github.com/repeter513/shop-proto/gen/go/auth/v1;authv1";
+
+service AuthService {
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+}
+
+message User {
+  int64 id = 1;
+  string email = 2;
+}
+
+message RegisterUserRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterUserResponse {
+  int64 user_id = 1;
+}
+
+message LoginUserRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginUserResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+  int64 user_id = 4;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool is_valid = 1;
+  int64 user_id = 2;
+  repeated string roles = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+}
+
+message GetUserInfoRequest {
+  int64 user_id = 1;
+}
+
+message GetUserInfoResponse {
+  User user = 1;
+}

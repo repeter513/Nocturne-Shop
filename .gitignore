@@ -1,0 +1,10 @@
+.env
+env/*.env
+!env/*.env.example
+bin/
+dist/
+node_modules/
+.idea/
+.vscode/
+*.exe
+.DS_Store
