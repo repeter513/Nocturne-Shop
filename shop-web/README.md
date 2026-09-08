@@ -4,14 +4,14 @@
 
 **Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](README.md)
 
-API: HTTP [shop-BFF](../shop-BFF/README.md) (`/api/v1`).  
-Локальный стек: [shop-infra](../shop-infra/README.md) (порт `3000`).
+В compose **нет порта на хост** — статика отдаётся через [Envoy](../shop-infra/envoy/envoy.yaml) на http://localhost:8080.
 
 ## Стек
 
 - React 19 + TypeScript
 - Vite 6
 - react-router-dom 7
+- nginx (только статика в Docker)
 
 ## Страницы
 
@@ -33,18 +33,19 @@ API: HTTP [shop-BFF](../shop-BFF/README.md) (`/api/v1`).
 cd ../shop-infra && make up
 ```
 
-Открыть http://localhost:3000. Nginx проксирует `/api/` на BFF внутри docker-сети (`bff:8080`).  
-Проверка BFF с хоста: http://localhost:8090/health
+Открыть http://localhost:8080 — Envoy маршрутизирует `/` сюда, `/api/` → BFF.
 
 ### Локально (dev)
 
-Нужен запущенный BFF. Vite проксирует `/api/v1` на `http://localhost:8090` — тот же порт, что `BFF_HTTP_PORT` в compose.
+Нужен поднятый стек (`make up`) — Vite проксирует `/api/v1` на Envoy `:8080`.
 
 ```bash
 cp .env.example .env
 npm install
 npm run dev
 ```
+
+Dev-сервер: http://localhost:3000 (API через прокси на `:8080`).
 
 | Переменная | Описание |
 |------------|----------|

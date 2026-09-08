@@ -1,28 +1,25 @@
 # shop-infra
 
-Docker Compose для локального запуска всего магазина: инфра + микросервисы + BFF + web.
+Docker Compose для локального запуска всего магазина: инфра + микросервисы + BFF + web + **Envoy как единая точка входа**.
 
 **Экосистема:** [infra](README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-| Репо | Роль | Порт |
-|------|------|------|
-| [shop-proto](../shop-proto/README.md) | gRPC-контракты | — |
-| [shop-auth](../shop-auth/README.md) | auth | `8081` |
-| [shop-catalog](../shop-catalog/README.md) | catalog | `8082` |
-| [shop-cart](../shop-cart/README.md) | cart | `8083` |
-| [shop-order](../shop-order/README.md) | order | `8084` |
-| [shop-payment](../shop-payment/README.md) | payment | `8086` |
-| [shop-BFF](../shop-BFF/README.md) | HTTP API для фронта | `8090` (host) |
-| [shop-web](../shop-web/README.md) | фронт (nginx) | `3000` |
+| Компонент | Роль | Доступ с хоста |
+|-----------|------|----------------|
+| **Envoy** | UI + HTTP API + gRPC gateway | `:8080`, `:8443` |
+| [shop-web](../shop-web/README.md) | React (статика) | через Envoy `/` |
+| [shop-BFF](../shop-BFF/README.md) | HTTP JSON API | через Envoy `/api/` |
+| gRPC-сервисы | auth, catalog, cart, order, payment | через Envoy `:8443` |
 
 ## Что внутри
 
 - **Инфра:** PostgreSQL 16, Adminer
-- **Сервисы:** auth, catalog, cart, order, payment (build из соседних папок монорепо)
-- **BFF + web:** HTTP API на host `:8090` (внутри контейнера `:8080`), UI на `:3000`
-- **Gateway:** Envoy — единая точка входа gRPC на `:443` (конфиг: `envoy/envoy.yaml`)
+- **Сервисы:** auth, catalog, cart, order, payment (только docker-сеть)
+- **BFF + web:** без портов на хост — трафик через Envoy
+- **Gateway:** `envoy/envoy.yaml` — `/` → web, `/api/` → BFF, gRPC по authority на `:8443`
 - **Init:** `postgres/init` создаёт БД
 - **Env-шаблоны:** `.env.example` и `env/*.env.example`
+
 ## Структура repos
 
 **Монорепо [Nocturne](../README.md)** — все сервисы уже в одном дереве:
@@ -44,18 +41,15 @@ Nocturne/
 
 ## Быстрый старт
 
-Из корня [Nocturne](../README.md) или из `shop-infra`:
-
 ```bash
 make init      # .env и env/*.env из шаблонов (если ещё нет)
-make up        # postgres + все сервисы + bff + web (--build)
-make migrate   # миграции всех сервисов (после up, когда postgres готов)
+make up        # postgres + сервисы + bff + web + envoy (--build)
+make migrate   # миграции (после up)
 ```
 
-`make up` и `make infra-up` сами вызывают `make env`, если файлов ещё нет.
-
-UI: http://localhost:3000  
-BFF: http://localhost:8090/health
+**Магазин:** http://localhost:8080  
+**Health BFF:** http://localhost:8080/health  
+**Adminer:** http://localhost:8089
 
 Только инфра (без сервисов):
 
@@ -65,27 +59,33 @@ make infra-up
 
 ### Checkout flow (E2E)
 
-1. [shop-web](../shop-web/README.md) / [shop-BFF](../shop-BFF/README.md) — регистрация / логин
-2. [shop-cart](../shop-cart/README.md) — добавить товары
-3. [shop-order](../shop-order/README.md) — `CreateOrder` (корзина → резерв стока, статус `pending`)
-4. [shop-order](../shop-order/README.md) — `PayOrder` (payment → confirm стока) или `CancelOrder`
+1. http://localhost:8080 — регистрация / логин
+2. Добавить товары в корзину
+3. Оформить заказ (`CreateOrder`)
+4. Оплатить или отменить
 
 ## Команды
 
 | Команда | Описание |
 |---------|----------|
-| `make up` | Поднять infra + все сервисы + bff + web |
-| `make down` | Остановить и удалить контейнеры |
+| `make up` | Поднять весь стек |
+| `make down` | Остановить контейнеры |
 | `make infra-up` | postgres, adminer |
-| `make migrate` | `scripts/migrate-all.sh` — миграции auth, catalog, cart, order, payment |
-| `make logs` | Логи всех контейнеров |
+| `make migrate` | `scripts/migrate-all.sh` |
+| `make logs` | Логи compose |
 | `make init` / `make env` | Создать `.env` и `env/*.env` из шаблонов |
+| `make envoy-reload` | Перезагрузить конфиг Envoy |
 
-## Порты и БД
+## Порты (.env)
+
+| Переменная | Default | Описание |
+|------------|---------|----------|
+| `ENVOY_HTTP_PORT` | `8080` | UI + HTTP API |
+| `ENVOY_GRPC_PORT` | `8443` | gRPC gateway (host → container :443) |
+| `ENVOY_ADMIN_PORT` | `9901` | Envoy admin |
+| `ADMINER_PORT` | `8089` | Adminer |
 
 См. [docs/ports.md](docs/ports.md).
-
-Дефолты Postgres: `shop` / `shop`. Сервисы — gRPC; BFF — HTTP.
 
 ## Env для order
 
@@ -100,7 +100,7 @@ PAYMENT_GRPC_ADDR=payment:8086
 JWT_SECRET=<тот же base64, что в auth>
 ```
 
-## Документация сервисов
+## Докуменция сервисов
 
 - [shop-proto](../shop-proto/README.md) — контракты
 - [shop-auth](../shop-auth/README.md)

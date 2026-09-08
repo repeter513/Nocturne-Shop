@@ -28,7 +28,7 @@ Nocturne/
 
 ```bash
 make init      # .env и env/*.env из шаблонов (первый раз)
-make up        # postgres + все сервисы + bff + web
+make up        # postgres + сервисы + bff + web + envoy
 make migrate   # миграции БД (после up, когда postgres готов)
 ```
 
@@ -42,26 +42,25 @@ make down
 
 ### 3. Проверка, что всё работает
 
+**Один адрес** — UI и API через Envoy:
+
 | Что проверить | URL | Ожидаемый результат |
 |---------------|-----|---------------------|
-| BFF жив | http://localhost:8090/health | `{"status":"ok"}` |
-| Каталог (API) | http://localhost:8090/api/v1/products | JSON со списком товаров |
-| UI магазина | http://localhost:3000 | Страница каталога Nocturne |
+| UI магазина | http://localhost:8080 | Страница каталога Nocturne |
+| BFF health | http://localhost:8080/health | `{"status":"ok"}` |
+| Каталог (API) | http://localhost:8080/api/v1/products | JSON со списком товаров |
 | Adminer (БД) | http://localhost:8089 | Вход: `shop` / `shop` |
 
-Через терминал:
-
 ```bash
-curl http://localhost:8090/health
-curl http://localhost:8090/api/v1/products
+curl http://localhost:8080/health
+curl http://localhost:8080/api/v1/products
 ```
 
-> BFF — JSON API, не веб-страница. На http://localhost:8090/ будет 404 — это нормально.  
-> BFF с хоста на порту **8090** (`BFF_HTTP_PORT` в `shop-infra/.env`). UI на `:3000` ходит в BFF через docker-сеть.
+> Порт `:8080` занят? Задайте `ENVOY_HTTP_PORT=8888` в `shop-infra/.env` и перезапустите стек.
 
 ### 4. Попробовать сценарий
 
-1. Открыть http://localhost:3000
+1. Открыть http://localhost:8080
 2. Зарегистрироваться / войти
 3. Добавить товар в корзину
 4. Оформить заказ → оплатить или отменить
@@ -83,17 +82,13 @@ curl http://localhost:8090/api/v1/products
 | `make logs` | Логи compose |
 | `make infra-up` | Только Postgres + Adminer |
 
-## Порты сервисов
+## Порты (host)
 
 | Сервис | Порт |
 |--------|------|
-| shop-BFF | 8090 (host) → 8080 (контейнер) |
-| shop-auth | 8081 |
-| shop-catalog | 8082 |
-| shop-cart | 8083 |
-| shop-order | 8084 |
-| shop-payment | 8086 |
-| shop-web | 3000 |
+| **Envoy (UI + API)** | 8080 |
+| Envoy gRPC gateway | 8443 |
+| Adminer | 8089 |
 | PostgreSQL | 5432 |
 
 Подробнее: [shop-infra/docs/ports.md](shop-infra/docs/ports.md).
@@ -102,25 +97,24 @@ curl http://localhost:8090/api/v1/products
 
 ```mermaid
 flowchart LR
-  Web[shop-web :3000] --> BFF[shop-BFF :8090 host]
+  Browser --> Envoy[Envoy :8080]
+  Envoy -->|"/"| Web[shop-web]
+  Envoy -->|"/api/"| BFF[shop-BFF]
   BFF --> Auth[shop-auth]
   BFF --> Catalog[shop-catalog]
   BFF --> Cart[shop-cart]
   BFF --> Order[shop-order]
   BFF --> Payment[shop-payment]
-  Order --> Cart
-  Order --> Catalog
-  Order --> Payment
+  Envoy -->|gRPC :8443| Auth
+  Envoy --> Catalog
+  Envoy --> Cart
+  Envoy --> Order
+  Envoy --> Payment
   Auth --> PG[(PostgreSQL)]
   Catalog --> PG
   Cart --> PG
   Order --> PG
   Payment --> PG
-  Envoy[Envoy :443] --> Auth
-  Envoy --> Catalog
-  Envoy --> Cart
-  Envoy --> Order
-  Envoy --> Payment
 ```
 
 ## Документация сервисов

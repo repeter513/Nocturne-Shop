@@ -4,7 +4,10 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 
 **Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](README.md) · [web](../shop-web/README.md)
 
-Локальный стек: [shop-infra](../shop-infra/README.md) (host `:8090`, env: [`env/bff.env.example`](../shop-infra/env/bff.env.example))
+В compose **нет порта на хост** — HTTP API доступен через [Envoy](../shop-infra/envoy/envoy.yaml):
+
+- http://localhost:8080/health
+- http://localhost:8080/api/v1/...
 
 ## Стек
 
@@ -12,14 +15,14 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 - HTTP (`net/http`)
 - gRPC-клиенты к auth, catalog, cart, order, payment ([shop-proto](../shop-proto/README.md))
 
-## Запуск локально
+## Запуск локально (без Docker)
 
 ```bash
 cp .env.example .env
 go run ./cmd/server
 ```
 
-Для [shop-web](../shop-web/README.md) `npm run dev` нужен `HTTP_PORT=8090` (Vite проксирует на `:8090`).
+Слушает `:8080` (или `HTTP_PORT`). Для `npm run dev` фронта нужен также Envoy или прямой прокси Vite на этот порт.
 
 ## Docker (через shop-infra)
 
@@ -27,8 +30,7 @@ go run ./cmd/server
 cd ../shop-infra && make up
 ```
 
-BFF с host: http://localhost:8090 (внутри контейнера `:8080`, снаружи `BFF_HTTP_PORT=8090`).  
-Фронт на `:3000` проксирует `/api/` на BFF через docker-сеть.
+BFF доступен только внутри docker-сети; снаружи — через Envoy `/api/` и `/health`.
 
 ## API
 
@@ -41,7 +43,7 @@ BFF с host: http://localhost:8090 (внутри контейнера `:8080`, �
 | POST | `/api/v1/auth/login` | — | вход |
 | POST | `/api/v1/auth/refresh` | — | обновление токена |
 | GET | `/api/v1/auth/me` | ✓ | текущий пользователь |
-| GET | `/api/v1/products` | — | список товаров (`page`, `pageSize`, `categoryId`) |
+| GET | `/api/v1/products` | — | список товаров |
 | GET | `/api/v1/products/{id}` | — | товар |
 | GET | `/api/v1/products/{id}/stock` | — | остаток |
 | GET | `/api/v1/categories` | — | категории |
@@ -50,7 +52,7 @@ BFF с host: http://localhost:8090 (внутри контейнера `:8080`, �
 | PUT | `/api/v1/cart/items/{productId}` | ✓ | изменить количество |
 | DELETE | `/api/v1/cart/items/{productId}` | ✓ | удалить позицию |
 | DELETE | `/api/v1/cart` | ✓ | очистить корзину |
-| POST | `/api/v1/orders` | ✓ | оформить заказ (`pending` + резерв) |
+| POST | `/api/v1/orders` | ✓ | оформить заказ |
 | POST | `/api/v1/orders/{id}/pay` | ✓ | оплатить заказ |
 | POST | `/api/v1/orders/{id}/cancel` | ✓ | отменить заказ |
 | GET | `/api/v1/orders` | ✓ | список заказов |
@@ -62,7 +64,7 @@ BFF с host: http://localhost:8090 (внутри контейнера `:8080`, �
 
 | Переменная | Описание |
 |------------|----------|
-| `HTTP_PORT` | HTTP-порт (default `8080`) |
+| `HTTP_PORT` | HTTP-порт внутри контейнера (default `8080`) |
 | `AUTH_GRPC_ADDR` | адрес shop-auth |
 | `CATALOG_GRPC_ADDR` | адрес shop-catalog |
 | `CART_GRPC_ADDR` | адрес shop-cart |
@@ -70,3 +72,5 @@ BFF с host: http://localhost:8090 (внутри контейнера `:8080`, �
 | `PAYMENT_GRPC_ADDR` | адрес shop-payment |
 | `LOG_LEVEL` | уровень логирования (default `info`) |
 | `CORS_ORIGINS` | allowed origin (default `*`) |
+
+Шаблон для compose: [`env/bff.env.example`](../shop-infra/env/bff.env.example)

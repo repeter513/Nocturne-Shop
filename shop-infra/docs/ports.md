@@ -1,19 +1,24 @@
 # Порты локального стека
 
+Единая точка входа — **Envoy**: фронт и HTTP API на одном порту.
+
 | Сервис | Порт (host) | URL |
 |--------|-------------|-----|
-| web | 3000 | http://localhost:3000 |
-| bff | 8090 | http://localhost:8090 |
-| envoy (gRPC gateway) | 443 | grpc://localhost:443 |
+| **shop (UI + API)** | 8080 | http://localhost:8080 |
+| BFF health | 8080 | http://localhost:8080/health |
+| API | 8080 | http://localhost:8080/api/v1/... |
+| envoy (gRPC gateway) | 8443 | grpc через authority (см. ниже) |
 | envoy admin | 9901 | http://localhost:9901 |
-| auth | 8081 | grpc://localhost:8081 |
-| catalog | 8082 | grpc://localhost:8082 |
-| cart | 8083 | grpc://localhost:8083 |
-| order | 8084 | grpc://localhost:8084 |
-| notification | 8085 | grpc://localhost:8085 |
-| payment | 8086 | grpc://localhost:8086 |
 | PostgreSQL | 5432 | postgres://shop:shop@localhost:5432 |
 | Adminer | 8089 | http://localhost:8089 |
+
+gRPC-сервисы с хоста не проброшены — только через Envoy `:8443`:
+
+```bash
+grpcurl -plaintext -authority catalog.local localhost:8443 list
+```
+
+Порт `:8080` настраивается через `ENVOY_HTTP_PORT` в `shop-infra/.env`.
 
 ## Базы данных
 
