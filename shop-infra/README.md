@@ -34,13 +34,13 @@ Docker Compose для локального запуска всего магаз�
 Перед первым `make up` создай ключи (если ещё нет):
 
 ```bash
-mkdir -p ~/.shop-keys
-openssl genpkey -algorithm ED25519 -out ~/.shop-keys/private.pem
-openssl pkey -in ~/.shop-keys/private.pem -pubout -out ~/.shop-keys/public.pem
-chmod 600 ~/.shop-keys/private.pem
+mkdir -p ../.shop-keys
+openssl genpkey -algorithm ED25519 -out ../.shop-keys/private.pem
+openssl pkey -in ../.shop-keys/private.pem -pubout -out ../.shop-keys/public.pem
+chmod 600 ../.shop-keys/private.pem
 ```
 
-В `.env` укажи `JWT_KEYS_DIR=~/.shop-keys` (см. `.env.example`). Compose монтирует каталог в контейнеры как `/run/jwt/` — сервисы читают `private.pem` / `public.pem` оттуда.
+В `.env` укажи `JWT_KEYS_DIR=../.shop-keys` (см. `.env.example`) — путь относительно `docker-compose.yml`. Compose монтирует каталог в контейнеры как `/run/jwt/`; в `env/*.env` пути внутри контейнера: `/run/jwt/*.pem`. `~` в compose не раскрывается.
 
 Подробнее: [shop-auth](../shop-auth/README.md#jwt-ключи-ed25519).
 

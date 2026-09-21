@@ -169,16 +169,16 @@ go get github.com/repeter513/shop-proto@v0.2.6
 
 JWT подписывается **Ed25519 (EdDSA)**. Приватный ключ только в [shop-auth](../shop-auth/README.md); остальные сервисы держат публичный ключ и только проверяют токены.
 
-### Генерация ключей (вне репозитория)
+### Генерация ключей
 
 ```bash
-mkdir -p ~/.shop-keys
-openssl genpkey -algorithm ED25519 -out ~/.shop-keys/private.pem
-openssl pkey -in ~/.shop-keys/private.pem -pubout -out ~/.shop-keys/public.pem
-chmod 600 ~/.shop-keys/private.pem
+mkdir -p .shop-keys
+openssl genpkey -algorithm ED25519 -out .shop-keys/private.pem
+openssl pkey -in .shop-keys/private.pem -pubout -out .shop-keys/public.pem
+chmod 600 .shop-keys/private.pem
 ```
 
-Ключи не коммитятся (`*.pem` в `.gitignore`).
+Из корня монорепо. Ключи не коммитятся (`.shop-keys/` в `.gitignore`).
 
 Access-токен содержит `iss`, `aud` (список сервисов), refresh — `jti` + `aud: shop-auth`. Отзыв refresh по `jti` — **планируется** (пока только криптографическая проверка).
 

@@ -8,3 +8,4 @@ node_modules/
 .vscode/
 *.exe
 .DS_Store
+.shop-keys/

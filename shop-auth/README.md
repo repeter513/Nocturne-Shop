@@ -22,10 +22,10 @@ gRPC-сервис аутентификации: регистрация, логи
 Один раз перед первым запуском:
 
 ```bash
-mkdir -p ~/.shop-keys
-openssl genpkey -algorithm ED25519 -out ~/.shop-keys/private.pem
-openssl pkey -in ~/.shop-keys/private.pem -pubout -out ~/.shop-keys/public.pem
-chmod 600 ~/.shop-keys/private.pem
+mkdir -p ../.shop-keys
+openssl genpkey -algorithm ED25519 -out ../.shop-keys/private.pem
+openssl pkey -in ../.shop-keys/private.pem -pubout -out ../.shop-keys/public.pem
+chmod 600 ../.shop-keys/private.pem
 ```
 
 | Файл | Где нужен |

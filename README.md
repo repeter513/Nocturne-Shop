@@ -30,10 +30,10 @@ Nocturne/
 ### 2. JWT-ключи (Ed25519, один раз)
 
 ```bash
-mkdir -p ~/.shop-keys
-openssl genpkey -algorithm ED25519 -out ~/.shop-keys/private.pem
-openssl pkey -in ~/.shop-keys/private.pem -pubout -out ~/.shop-keys/public.pem
-chmod 600 ~/.shop-keys/private.pem
+mkdir -p .shop-keys
+openssl genpkey -algorithm ED25519 -out .shop-keys/private.pem
+openssl pkey -in .shop-keys/private.pem -pubout -out .shop-keys/public.pem
+chmod 600 .shop-keys/private.pem
 ```
 
 | Файл | Кто использует |
@@ -41,7 +41,10 @@ chmod 600 ~/.shop-keys/private.pem
 | `private.pem` | shop-auth (подпись токенов) |
 | `public.pem` | auth, catalog, cart, order, payment (проверка) |
 
-В `shop-infra/.env` укажи `JWT_KEYS_DIR=~/.shop-keys` (см. `.env.example`).
+Пути в `.env.example` — **относительные** (от каталога сервиса или `shop-infra/`).  
+`JWT_KEYS_DIR=../.shop-keys` в `shop-infra/.env` — относительно `docker-compose.yml`.  
+В Docker-сервисах (`shop-infra/env/*.env`) пути **внутри контейнера**: `/run/jwt/*.pem`.  
+`~` в compose не раскрывается — только относительный или абсолютный путь на хосте.
 
 ### 3. Env-файлы и запуск
 
