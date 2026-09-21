@@ -10,10 +10,20 @@
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
   font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text);
+  text-decoration: none;
+}
+
+.logo-mark {
+  display: block;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .nav {

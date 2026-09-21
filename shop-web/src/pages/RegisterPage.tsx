@@ -1,6 +1,7 @@
 // Registration page — new account creation form. / Страница регистрации — форма создания нового аккаунта.
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { SHOP_NAME } from '../config'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
@@ -35,6 +36,10 @@ export function RegisterPage() {
   return (
     <div className="page auth-page">
       <div className="auth-card">
+        <div className="auth-brand">
+          <img src="/logo.png" alt="" width={48} height={48} />
+          <span>{SHOP_NAME}</span>
+        </div>
         <h1>Регистрация</h1>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit} className="auth-form">

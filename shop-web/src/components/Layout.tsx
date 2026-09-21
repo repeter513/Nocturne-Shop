@@ -21,7 +21,10 @@ export function Layout() {
     <div className="layout">
       <a href="#main-content" className="skip-link">К содержимому</a>
       <header className="header">
-        <Link to="/" className="logo">{SHOP_NAME}</Link>
+        <Link to="/" className="logo">
+          <img src="/logo.png" alt="" className="logo-mark" width={28} height={28} />
+          <span>{SHOP_NAME}</span>
+        </Link>
         <nav className="nav">
           <NavLink to="/" end>Каталог</NavLink>
           {/* Cart and Orders links only visible when authenticated. / Ссылки Корзина и Заказы видны только авторизованным. */}
