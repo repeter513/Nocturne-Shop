@@ -1,3 +1,5 @@
+// Package config loads BFF settings from environment variables.
+// Пакет config загружает настройки BFF из переменных окружения.
 package config
 
 import (
@@ -9,17 +11,44 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Config holds runtime configuration for the BFF gateway.
+// Config хранит конфигурацию времени выполнения BFF-шлюза.
 type Config struct {
-	HTTPPort     int
-	AuthAddr     string
-	CatalogAddr  string
-	CartAddr     string
-	OrderAddr    string
-	PaymentAddr  string
-	LogLevel     string
-	CORSOrigins  string
+	// HTTPPort is the TCP port the BFF HTTP server listens on (default 8080).
+	// HTTPPort — TCP-порт HTTP-сервера BFF (по умолчанию 8080).
+	HTTPPort int
+
+	// AuthAddr is the gRPC address of the auth microservice (host:port).
+	// AuthAddr — gRPC-адрес микросервиса auth (host:port).
+	AuthAddr string
+
+	// CatalogAddr is the gRPC address of the catalog microservice.
+	// CatalogAddr — gRPC-адрес микросервиса catalog.
+	CatalogAddr string
+
+	// CartAddr is the gRPC address of the cart microservice.
+	// CartAddr — gRPC-адрес микросервиса cart.
+	CartAddr string
+
+	// OrderAddr is the gRPC address of the order microservice.
+	// OrderAddr — gRPC-адрес микросервиса order.
+	OrderAddr string
+
+	// PaymentAddr is the gRPC address of the payment microservice.
+	// PaymentAddr — gRPC-адрес микросервиса payment.
+	PaymentAddr string
+
+	// LogLevel controls structured log verbosity (default "info").
+	// LogLevel задаёт уровень детализации логов (по умолчанию "info").
+	LogLevel string
+
+	// CORSOrigins is the Access-Control-Allow-Origin value (default "*").
+	// CORSOrigins — значение заголовка Access-Control-Allow-Origin (по умолчанию "*").
+	CORSOrigins string
 }
 
+// Load reads and validates configuration from .env and environment.
+// Load читает и проверяет конфигурацию из .env и окружения.
 func Load() (*Config, error) {
 	if err := loadDotEnv(); err != nil {
 		return nil, fmt.Errorf("load .env: %w", err)
@@ -51,6 +80,8 @@ func Load() (*Config, error) {
 		cfg.CORSOrigins = "*"
 	}
 
+	// Every gRPC backend address is mandatory — BFF cannot start without them.
+	// Адрес каждого gRPC-backend обязателен — BFF не стартует без них.
 	for _, pair := range []struct {
 		name string
 		val  string
@@ -69,10 +100,14 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// HTTPAddr returns the listen address for the HTTP server.
+// HTTPAddr возвращает адрес прослушивания HTTP-сервера.
 func (c *Config) HTTPAddr() string {
 	return fmt.Sprintf(":%d", c.HTTPPort)
 }
 
+// loadDotEnv searches upward from cwd for a .env file and loads it.
+// loadDotEnv ищет .env вверх от текущей директории и загружает его.
 func loadDotEnv() error {
 	dir, err := os.Getwd()
 	if err != nil {

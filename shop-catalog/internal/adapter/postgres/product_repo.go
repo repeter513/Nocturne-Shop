@@ -1,3 +1,5 @@
+// Package postgres implements product and category persistence.
+// Пакет postgres реализует хранение товаров и категорий.
 package postgres
 
 import (
@@ -10,14 +12,22 @@ import (
 	"github.com/repeter513/shop-catalog/internal/repository"
 )
 
+// ProductRepo provides PostgreSQL-backed product and category access.
+// ProductRepo предоставляет доступ к товарам и категориям через PostgreSQL.
 type ProductRepo struct {
+	// db is the shared connection wrapper with pool and WithTx helper.
+	// db — общая обёртка соединения с pool и WithTx.
 	db *DB
 }
 
+// NewProductRepo creates a ProductRepo bound to the given DB.
+// NewProductRepo создаёт ProductRepo, привязанный к указанной БД.
 func NewProductRepo(db *DB) *ProductRepo {
 	return &ProductRepo{db: db}
 }
 
+// FindByID loads a product by primary key; nil if not found.
+// FindByID загружает товар по первичному ключу; nil если не найден.
 func (r *ProductRepo) FindByID(ctx context.Context, id int64) (*domain.Product, error) {
 	row := r.db.Pool().QueryRow(ctx, `
 		SELECT id, name, description, price, category_id, stock, active, created_at, updated_at
@@ -32,6 +42,10 @@ func (r *ProductRepo) FindByID(ctx context.Context, id int64) (*domain.Product, 
 	return p, nil
 }
 
+// List returns active products with pagination and optional category filter.
+// List возвращает активные товары с пагинацией и опциональным фильтром по категории.
+// SQL: COUNT for total, then SELECT ... ORDER BY id LIMIT/OFFSET (params from service defaults).
+// SQL: COUNT для total, затем SELECT ... ORDER BY id LIMIT/OFFSET (параметры из дефолтов service).
 func (r *ProductRepo) List(ctx context.Context, params repository.ListProductsParams) ([]*domain.Product, int32, error) {
 	where := "WHERE active = true"
 	args := []any{}
@@ -71,6 +85,10 @@ func (r *ProductRepo) List(ctx context.Context, params repository.ListProductsPa
 	return products, total, rows.Err()
 }
 
+// GetStock returns physical stock quantities for the given product IDs.
+// GetStock возвращает физические остатки для указанных ID товаров.
+// Does not subtract reservations — service layer computes available stock.
+// Не вычитает резервы — service слой вычисляет доступный остаток.
 func (r *ProductRepo) GetStock(ctx context.Context, productIDs []int64) (map[int64]int32, error) {
 	rows, err := r.db.Pool().Query(ctx, `SELECT id, stock FROM products WHERE id = ANY($1)`, productIDs)
 	if err != nil {
@@ -90,6 +108,8 @@ func (r *ProductRepo) GetStock(ctx context.Context, productIDs []int64) (map[int
 	return out, rows.Err()
 }
 
+// ListCategories returns categories, optionally filtered by parent ID.
+// ListCategories возвращает категории, опционально отфильтрованные по parent ID.
 func (r *ProductRepo) ListCategories(ctx context.Context, parentID *int64) ([]*domain.Category, error) {
 	var rows pgx.Rows
 	var err error
@@ -117,6 +137,10 @@ func (r *ProductRepo) ListCategories(ctx context.Context, parentID *int64) ([]*d
 	return categories, rows.Err()
 }
 
+// getStockForUpdate locks a product row and returns its stock for transactional updates.
+// getStockForUpdate блокирует строку товара и возвращает остаток для транзакционных обновлений.
+// SELECT ... FOR UPDATE prevents concurrent reserve/confirm races on same product.
+// SELECT ... FOR UPDATE предотвращает гонки reserve/confirm на одном товаре.
 func (r *ProductRepo) getStockForUpdate(ctx context.Context, tx pgx.Tx, productID int64) (int32, error) {
 	var stock int32
 	err := tx.QueryRow(ctx, `SELECT stock FROM products WHERE id = $1 FOR UPDATE`, productID).Scan(&stock)
@@ -126,6 +150,10 @@ func (r *ProductRepo) getStockForUpdate(ctx context.Context, tx pgx.Tx, productI
 	return stock, err
 }
 
+// decrementStockTx atomically reduces product stock if sufficient quantity exists.
+// decrementStockTx атомарно уменьшает остаток товара при достаточном количестве.
+// RowsAffected=0 → ErrInsufficientStock (optimistic check via WHERE stock >= qty).
+// RowsAffected=0 → ErrInsufficientStock (оптимистичная проверка через WHERE stock >= qty).
 func (r *ProductRepo) decrementStockTx(ctx context.Context, tx pgx.Tx, productID int64, qty int32) error {
 	tag, err := tx.Exec(ctx, `
 		UPDATE products SET stock = stock - $2, updated_at = NOW()
@@ -139,10 +167,14 @@ func (r *ProductRepo) decrementStockTx(ctx context.Context, tx pgx.Tx, productID
 	return nil
 }
 
+// rowScanner abstracts pgx.Row and pgx.Rows Scan method.
+// rowScanner абстрагирует метод Scan pgx.Row и pgx.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
 }
 
+// scanProduct maps a database row to a domain Product.
+// scanProduct преобразует строку БД в доменный Product.
 func scanProduct(row rowScanner) (*domain.Product, error) {
 	var p domain.Product
 	err := row.Scan(

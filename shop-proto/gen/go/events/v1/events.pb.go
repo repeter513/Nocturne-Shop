@@ -4,7 +4,7 @@
 // 	protoc        v7.34.1
 // source: events/v1/events.proto
 
-package events1
+package eventsv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -22,52 +22,52 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ORDER_EVENT_TYPE int32
+type OrderEventType int32
 
 const (
-	ORDER_EVENT_TYPE_ORDER_EVENT_TYPE_UNSPECIFIED ORDER_EVENT_TYPE = 0
-	ORDER_EVENT_TYPE_ORDER_EVENT_TYPE_PAID        ORDER_EVENT_TYPE = 1
-	ORDER_EVENT_TYPE_ORDER_EVENT_TYPE_FAILED      ORDER_EVENT_TYPE = 2
+	OrderEventType_ORDER_EVENT_TYPE_UNSPECIFIED OrderEventType = 0
+	OrderEventType_ORDER_EVENT_TYPE_PAID        OrderEventType = 1
+	OrderEventType_ORDER_EVENT_TYPE_FAILED      OrderEventType = 2
 )
 
-// Enum value maps for ORDER_EVENT_TYPE.
+// Enum value maps for OrderEventType.
 var (
-	ORDER_EVENT_TYPE_name = map[int32]string{
+	OrderEventType_name = map[int32]string{
 		0: "ORDER_EVENT_TYPE_UNSPECIFIED",
 		1: "ORDER_EVENT_TYPE_PAID",
 		2: "ORDER_EVENT_TYPE_FAILED",
 	}
-	ORDER_EVENT_TYPE_value = map[string]int32{
+	OrderEventType_value = map[string]int32{
 		"ORDER_EVENT_TYPE_UNSPECIFIED": 0,
 		"ORDER_EVENT_TYPE_PAID":        1,
 		"ORDER_EVENT_TYPE_FAILED":      2,
 	}
 )
 
-func (x ORDER_EVENT_TYPE) Enum() *ORDER_EVENT_TYPE {
-	p := new(ORDER_EVENT_TYPE)
+func (x OrderEventType) Enum() *OrderEventType {
+	p := new(OrderEventType)
 	*p = x
 	return p
 }
 
-func (x ORDER_EVENT_TYPE) String() string {
+func (x OrderEventType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ORDER_EVENT_TYPE) Descriptor() protoreflect.EnumDescriptor {
+func (OrderEventType) Descriptor() protoreflect.EnumDescriptor {
 	return file_events_v1_events_proto_enumTypes[0].Descriptor()
 }
 
-func (ORDER_EVENT_TYPE) Type() protoreflect.EnumType {
+func (OrderEventType) Type() protoreflect.EnumType {
 	return &file_events_v1_events_proto_enumTypes[0]
 }
 
-func (x ORDER_EVENT_TYPE) Number() protoreflect.EnumNumber {
+func (x OrderEventType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ORDER_EVENT_TYPE.Descriptor instead.
-func (ORDER_EVENT_TYPE) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use OrderEventType.Descriptor instead.
+func (OrderEventType) EnumDescriptor() ([]byte, []int) {
 	return file_events_v1_events_proto_rawDescGZIP(), []int{0}
 }
 
@@ -168,10 +168,10 @@ func (NotificationStatus) EnumDescriptor() ([]byte, []int) {
 
 type OrderEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          ORDER_EVENT_TYPE       `protobuf:"varint,1,opt,name=type,proto3,enum=events.v1.ORDER_EVENT_TYPE" json:"type,omitempty"`
+	Type          OrderEventType         `protobuf:"varint,1,opt,name=type,proto3,enum=events.v1.OrderEventType" json:"type,omitempty"`
 	OrderId       int64                  `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	TotalPrice    float64                `protobuf:"fixed64,4,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
+	TotalPrice    int64                  `protobuf:"varint,4,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
 	PaymentId     int64                  `protobuf:"varint,5,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -207,11 +207,11 @@ func (*OrderEvent) Descriptor() ([]byte, []int) {
 	return file_events_v1_events_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *OrderEvent) GetType() ORDER_EVENT_TYPE {
+func (x *OrderEvent) GetType() OrderEventType {
 	if x != nil {
 		return x.Type
 	}
-	return ORDER_EVENT_TYPE_ORDER_EVENT_TYPE_UNSPECIFIED
+	return OrderEventType_ORDER_EVENT_TYPE_UNSPECIFIED
 }
 
 func (x *OrderEvent) GetOrderId() int64 {
@@ -228,7 +228,7 @@ func (x *OrderEvent) GetUserId() int64 {
 	return 0
 }
 
-func (x *OrderEvent) GetTotalPrice() float64 {
+func (x *OrderEvent) GetTotalPrice() int64 {
 	if x != nil {
 		return x.TotalPrice
 	}
@@ -338,13 +338,13 @@ var File_events_v1_events_proto protoreflect.FileDescriptor
 
 const file_events_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x16events/v1/events.proto\x12\tevents.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb1\x01\n" +
+	"\x16events/v1/events.proto\x12\tevents.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaf\x01\n" +
 	"\n" +
-	"OrderEvent\x12/\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1b.events.v1.ORDER_EVENT_TYPER\x04type\x12\x19\n" +
+	"OrderEvent\x12-\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x19.events.v1.OrderEventTypeR\x04type\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\x03R\x06userId\x12\x1f\n" +
-	"\vtotal_price\x18\x04 \x01(\x01R\n" +
+	"\vtotal_price\x18\x04 \x01(\x03R\n" +
 	"totalPrice\x12\x1d\n" +
 	"\n" +
 	"payment_id\x18\x05 \x01(\x03R\tpaymentId\"\x8b\x02\n" +
@@ -355,8 +355,8 @@ const file_events_v1_events_proto_rawDesc = "" +
 	"\asubject\x18\x04 \x01(\tR\asubject\x12\x12\n" +
 	"\x04body\x18\x05 \x01(\tR\x04body\x125\n" +
 	"\x06status\x18\x06 \x01(\x0e2\x1d.events.v1.NotificationStatusR\x06status\x123\n" +
-	"\asent_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt*l\n" +
-	"\x10ORDER_EVENT_TYPE\x12 \n" +
+	"\asent_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt*j\n" +
+	"\x0eOrderEventType\x12 \n" +
 	"\x1cORDER_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15ORDER_EVENT_TYPE_PAID\x10\x01\x12\x1b\n" +
 	"\x17ORDER_EVENT_TYPE_FAILED\x10\x02*[\n" +
@@ -366,7 +366,7 @@ const file_events_v1_events_proto_rawDesc = "" +
 	"\x12NotificationStatus\x12#\n" +
 	"\x1fNOTIFICATION_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18NOTIFICATION_STATUS_SENT\x10\x01\x12\x1e\n" +
-	"\x1aNOTIFICATION_STATUS_FAILED\x10\x02B;Z9github.com/repeter513/shop-proto/gen/go/events/v1;events1b\x06proto3"
+	"\x1aNOTIFICATION_STATUS_FAILED\x10\x02B<Z:github.com/repeter513/shop-proto/gen/go/events/v1;eventsv1b\x06proto3"
 
 var (
 	file_events_v1_events_proto_rawDescOnce sync.Once
@@ -383,7 +383,7 @@ func file_events_v1_events_proto_rawDescGZIP() []byte {
 var file_events_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_events_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_events_v1_events_proto_goTypes = []any{
-	(ORDER_EVENT_TYPE)(0),         // 0: events.v1.ORDER_EVENT_TYPE
+	(OrderEventType)(0),           // 0: events.v1.OrderEventType
 	(NotificationChannel)(0),      // 1: events.v1.NotificationChannel
 	(NotificationStatus)(0),       // 2: events.v1.NotificationStatus
 	(*OrderEvent)(nil),            // 3: events.v1.OrderEvent
@@ -391,7 +391,7 @@ var file_events_v1_events_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_events_v1_events_proto_depIdxs = []int32{
-	0, // 0: events.v1.OrderEvent.type:type_name -> events.v1.ORDER_EVENT_TYPE
+	0, // 0: events.v1.OrderEvent.type:type_name -> events.v1.OrderEventType
 	1, // 1: events.v1.Notification.channel:type_name -> events.v1.NotificationChannel
 	2, // 2: events.v1.Notification.status:type_name -> events.v1.NotificationStatus
 	5, // 3: events.v1.Notification.sent_at:type_name -> google.protobuf.Timestamp

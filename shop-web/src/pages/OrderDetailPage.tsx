@@ -1,3 +1,4 @@
+// Order detail page — items, payment timer, pay / cancel actions. / Страница заказа — позиции, таймер оплаты, действия оплатить / отменить.
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
@@ -9,6 +10,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { useRequireAuth } from '../hooks/useRequireAuth'
 
+// Formats remaining milliseconds as M:SS countdown. / Форматирует оставшиеся миллисекунды как обратный отсчёт M:SS.
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000))
   const min = Math.floor(totalSec / 60)
@@ -16,6 +18,7 @@ function formatCountdown(ms: number): string {
   return `${min}:${sec.toString().padStart(2, '0')}`
 }
 
+// OrderDetailPage shows order items, payment countdown, and pay/cancel. / OrderDetailPage показывает позиции заказа, таймер оплаты и кнопки оплатить/отменить.
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user, authLoading } = useRequireAuth()
@@ -52,6 +55,7 @@ export function OrderDetailPage() {
     load()
   }, [user, authLoading, id])
 
+  // Payment countdown timer — ticks every second while order is PENDING. / Таймер оплаты — тикает каждую секунду пока заказ PENDING.
   useEffect(() => {
     if (!order || order.status !== 'ORDER_STATUS_PENDING') return
 
@@ -67,6 +71,7 @@ export function OrderDetailPage() {
     setPaying(true)
     setError('')
     try {
+      // POST /orders/:id/pay → triggers payment processing. / POST /orders/:id/pay → запускает обработку платежа.
       const updated = await api.payOrder(id)
       setOrder(updated)
       const p = await api.listPayments(1, 10, id)
@@ -88,6 +93,7 @@ export function OrderDetailPage() {
     setCancelling(true)
     setError('')
     try {
+      // POST /orders/:id/cancel → releases stock reservation. / POST /orders/:id/cancel → снимает резерв товара.
       const updated = await api.cancelOrder(id)
       setOrder(updated)
       toast('Заказ отменён', 'info')

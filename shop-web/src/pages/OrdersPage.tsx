@@ -1,3 +1,4 @@
+// Orders list page — paginated order history. / Страница списка заказов — история заказов с пагинацией.
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
@@ -8,6 +9,7 @@ import { useRequireAuth } from '../hooks/useRequireAuth'
 
 const PAGE_SIZE = 10
 
+// OrdersPage shows the user's orders with status badges. / OrdersPage показывает заказы пользователя со статусными бейджами.
 export function OrdersPage() {
   const { user, authLoading } = useRequireAuth()
   const [orders, setOrders] = useState<Order[]>([])
@@ -16,6 +18,7 @@ export function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Fetch paginated orders when auth is ready or page changes. / Загружаем заказы с пагинацией когда auth готов или меняется page.
   useEffect(() => {
     if (authLoading || !user) return
     setLoading(true)

@@ -1,61 +1,97 @@
+// Shopping cart service — per-user cart CRUD backed by catalog prices.
+// Сервис корзины — CRUD корзины пользователя с ценами из каталога.
 syntax = "proto3";
 
 package cart.v1;
 
-option go_package = "github.com/repeter513/shop-proto/gen/go/cart/v1;cart1";
+option go_package = "github.com/repeter513/shop-proto/gen/go/cart/v1;cartv1";
 
+// CartService manages cart items; user_id comes from JWT, not request body.
+// CartService управляет позициями корзины; user_id берётся из JWT, не из тела запроса.
 service CartService {
+  // AddToCart adds or increments a product line; fetches name/price from catalog.
+  // AddToCart добавляет или увеличивает позицию; name/price запрашиваются из catalog.
   rpc AddToCart(AddToCartRequest) returns (AddToCartResponse);
+
+  // UpdateCartItem sets quantity for a product (0 removes the line).
+  // UpdateCartItem устанавливает количество товара (0 удаляет позицию).
   rpc UpdateCartItem(UpdateCartItemRequest) returns (UpdateCartItemResponse);
+
+  // RemoveFromCart deletes a product line entirely.
+  // RemoveFromCart полностью удаляет позицию товара.
   rpc RemoveFromCart(RemoveFromCartRequest) returns (RemoveFromCartResponse);
+
+  // GetCart returns the full cart with computed total_price.
+  // GetCart возвращает полную корзину с вычисленным total_price.
   rpc GetCart(GetCartRequest) returns (GetCartResponse);
+
+  // ClearCart removes all items for the authenticated user.
+  // ClearCart удаляет все позиции аутентифицированного пользователя.
   rpc ClearCart(ClearCartRequest) returns (ClearCartResponse);
 }
 
+// CartItem is a single line with snapshot name/price at add time.
+// CartItem — одна позиция со снимком name/price на момент добавления.
 message CartItem {
   int64 product_id = 1;
   int32 quantity = 2;
-  string name = 3;
-  double price = 4;
+  string name = 3;   // Denormalized from catalog / Денормализовано из catalog
+  int64 price = 4;   // Price in minor units (kopecks) / Цена в минорных единицах (копейки)
 }
+
 message Cart {
   int64 user_id = 1;
   repeated CartItem items = 2;
-  double total_price = 3;
+  int64 total_price = 3;  // Sum of price*quantity / Сумма price*quantity
 }
+
+// user_id removed: extracted from JWT context.
+// user_id удалён: извлекается из JWT context.
 message GetCartRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
 }
+
 message GetCartResponse {
   Cart cart = 1;
 }
+
 message AddToCartRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
   int64 product_id = 2;
-  int32 quantity = 3;
+  int32 quantity = 3;  // Must be > 0 / Должно быть > 0
 }
+
 message AddToCartResponse {
   Cart cart = 1;
 }
+
 message UpdateCartItemRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
   int64 product_id = 2;
   int32 quantity = 3;
 }
+
 message UpdateCartItemResponse {
   Cart cart = 1;
 }
+
 message RemoveFromCartRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
   int64 product_id = 2;
 }
+
 message RemoveFromCartResponse {
   Cart cart = 1;
 }
+
 message ClearCartRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
 }
+
 message ClearCartResponse {
-
 }
-

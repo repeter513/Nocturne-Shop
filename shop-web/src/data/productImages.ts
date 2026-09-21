@@ -1,3 +1,6 @@
+// Static product image URLs and description helpers. / Статические URL изображений товаров и хелперы описаний.
+
+// Map of product ID to Unsplash image URL (demo catalog only). / Соответствие ID товара URL изображения на Unsplash (только демо-каталог).
 export const productImages: Record<string, string> = {
   '1': 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&q=80',
   '2': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80',
@@ -16,14 +19,17 @@ export const productImages: Record<string, string> = {
   '15': 'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=800&q=80',
 }
 
+// Returns image URL for a product or undefined. / Возвращает URL изображения товара или undefined.
 export function getProductImage(id: string): string | undefined {
   return productImages[id]
 }
 
+// Returns the first paragraph of a multi-paragraph description (for card preview). / Возвращает первый абзац многоабзацного описания (для превью карточки).
 export function getShortDescription(description: string): string {
   return description.split('\n\n')[0] ?? description
 }
 
+// Splits description into non-empty paragraphs (for detail page). / Разбивает описание на непустые абзацы (для страницы товара).
 export function getDetailParagraphs(description: string): string[] {
   return description.split('\n\n').filter(Boolean)
 }

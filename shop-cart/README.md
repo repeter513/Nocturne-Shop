@@ -2,9 +2,9 @@
 
 gRPC-сервис корзины: добавление, изменение, удаление позиций и просмотр корзины пользователя.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-Контракт API: [shop-proto `cart.v1.CartService`](../shop-proto/proto/cart/v1/cart.proto)
+Контракт API: [shop-proto `cart.v1.CartService`](../shop-proto/proto/cart/v1/cart.proto) (модуль `v0.2.6`)
 
 Локальный стек: [shop-infra](../shop-infra/README.md) (gRPC порт `8083`)
 
@@ -17,11 +17,11 @@ gRPC-сервис корзины: добавление, изменение, уд
 - Удалить позицию (`RemoveFromCart`)
 - Получить корзину с name, price, total (`GetCart`)
 - Очистить корзину (`ClearCart`)
-- Проверка стока и обогащение ответа через [shop-catalog](../shop-catalog/README.md)
+- Проверка стока и обогащение ответа через [shop-catalog](../shop-catolog/README.md)
 
 ## Стек
 
-- Go 1.26
+- Go 1.26.3
 - gRPC + protobuf ([shop-proto](../shop-proto/README.md))
 - PostgreSQL (`pgx`)
 - gRPC-клиент к catalog
@@ -32,7 +32,8 @@ gRPC-сервис корзины: добавление, изменение, уд
 
 - Go 1.26+
 - PostgreSQL (`cart_db`)
-- Запущенный [shop-catalog](../shop-catalog/README.md) на `8082`
+- Ed25519 `public.pem` (тот же, что в [shop-auth](../shop-auth/README.md))
+- Запущенный [shop-catalog](../shop-catolog/README.md) на `8082`
 
 ### Конфигурация
 
@@ -46,7 +47,7 @@ cp .env.example .env
 | `DATABASE_URL` | да | DSN PostgreSQL (`cart_db`) |
 | `LOG_LEVEL` | нет | По умолчанию `info` |
 | `CATALOG_GRPC_ADDR` | да | Адрес catalog |
-| `JWT_SECRET` | да | base64 secret, тот же что в [shop-auth](../shop-auth/README.md) |
+| `JWT_PUBLIC_KEY_PATH` | да | PEM Ed25519 public key |
 
 Все RPC требуют metadata `authorization: Bearer <access_token>`.
 
@@ -83,7 +84,7 @@ grpcurl -plaintext -H 'authorization: Bearer TOKEN' \
 cd ../shop-infra && make up
 ```
 
-Миграции в образ не входят — применяй отдельно (`make migrate-up`).
+Миграции в образ не входят — применяй отдельно (`make migrate-up` или `make migrate` в infra).
 
 ## Make-команды
 

@@ -1,8 +1,10 @@
+// Registration page — new account creation form. / Страница регистрации — форма создания нового аккаунта.
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
+// RegisterPage creates an account and auto-logs in on success. / RegisterPage создаёт аккаунт и автоматически входит при успехе.
 export function RegisterPage() {
   const { register } = useAuth()
   const { toast } = useToast()
@@ -17,6 +19,7 @@ export function RegisterPage() {
     setLoading(true)
     setError('')
     try {
+      // AuthContext.register → POST /auth/register then login. / AuthContext.register → POST /auth/register затем login.
       await register(email, password)
       toast('Аккаунт создан, добро пожаловать')
       navigate('/')

@@ -1,3 +1,4 @@
+// Product detail page — image, description, stock, add to cart. / Страница товара — изображение, описание, остаток, добавление в корзину.
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
@@ -8,6 +9,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { getDetailParagraphs, getProductImage } from '../data/productImages'
 
+// ProductPage loads product and stock, lets user add to cart. / ProductPage загружает товар и остаток, позволяет добавить в корзину.
 export function ProductPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
@@ -23,6 +25,7 @@ export function ProductPage() {
   const [added, setAdded] = useState(false)
   const [imgError, setImgError] = useState(false)
 
+  // Fetch product + stock when route param id changes. / Загружаем товар + остаток при смене id в маршруте.
   useEffect(() => {
     if (!id) return
     setLoading(true)
@@ -38,6 +41,7 @@ export function ProductPage() {
   }, [id])
 
   const handleAdd = async () => {
+    // Soft auth guard: redirect to login instead of useRequireAuth. / Мягкий auth guard: редирект на login вместо useRequireAuth.
     if (!user) {
       navigate('/login')
       return
@@ -47,6 +51,7 @@ export function ProductPage() {
     setError('')
     setAdded(false)
     try {
+      // POST /cart/items → updates server cart, then refresh header badge. / POST /cart/items → обновляет серверную корзину, затем бейдж в шапке.
       await api.addToCart(Number(product.id), quantity)
       setAdded(true)
       await refresh()

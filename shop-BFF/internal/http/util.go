@@ -1,3 +1,5 @@
+// Package http implements REST handlers and middleware for the BFF.
+// Пакет http реализует REST-обработчики и middleware для BFF.
 package http
 
 import (
@@ -11,11 +13,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// protoJSON marshals protobuf messages without unpopulated fields.
+// protoJSON сериализует protobuf-сообщения без незаполненных полей.
 var protoJSON = protojson.MarshalOptions{EmitUnpopulated: false}
 
+// writeJSON writes a JSON or protobuf JSON response.
+// writeJSON записывает JSON- или protobuf JSON-ответ.
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+	// Proto responses use protojson (int64 as strings, enum names, etc.).
+	// Proto-ответы сериализуются через protojson (int64 как строки, имена enum и т.д.).
 	if msg, ok := v.(proto.Message); ok {
 		b, err := protoJSON.Marshal(msg)
 		if err != nil {
@@ -28,6 +36,8 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+// writeError maps gRPC errors to HTTP JSON error responses.
+// writeError преобразует gRPC-ошибки в HTTP JSON-ответы об ошибке.
 func writeError(w http.ResponseWriter, err error) {
 	st, ok := status.FromError(err)
 	if !ok {
@@ -37,6 +47,8 @@ func writeError(w http.ResponseWriter, err error) {
 	writeJSON(w, grpcCodeToHTTP(st.Code()), map[string]string{"error": st.Message()})
 }
 
+// grpcCodeToHTTP maps gRPC status codes to HTTP status codes.
+// grpcCodeToHTTP сопоставляет коды статуса gRPC с HTTP-кодами.
 func grpcCodeToHTTP(code codes.Code) int {
 	switch code {
 	case codes.InvalidArgument:
@@ -56,6 +68,8 @@ func grpcCodeToHTTP(code codes.Code) int {
 	}
 }
 
+// queryInt reads an integer query parameter with a default fallback.
+// queryInt читает целочисленный query-параметр с запасным значением.
 func queryInt(r *http.Request, key string, def int) int {
 	raw := r.URL.Query().Get(key)
 	if raw == "" {
@@ -68,6 +82,8 @@ func queryInt(r *http.Request, key string, def int) int {
 	return v
 }
 
+// queryInt64 reads an int64 query parameter, returning 0 on failure.
+// queryInt64 читает int64 query-параметр, возвращая 0 при ошибке.
 func queryInt64(r *http.Request, key string) int64 {
 	raw := r.URL.Query().Get(key)
 	if raw == "" {
@@ -80,6 +96,8 @@ func queryInt64(r *http.Request, key string) int64 {
 	return v
 }
 
+// pathInt64 parses an int64 path parameter from the request.
+// pathInt64 разбирает int64 path-параметр из запроса.
 func pathInt64(r *http.Request, key string) (int64, error) {
 	raw := r.PathValue(key)
 	if raw == "" {
@@ -92,6 +110,8 @@ func pathInt64(r *http.Request, key string) (int64, error) {
 	return v, nil
 }
 
+// decodeJSON decodes the request body into dst.
+// decodeJSON декодирует тело запроса в dst.
 func decodeJSON(r *http.Request, dst any) error {
 	if r.Body == nil {
 		return status.Error(codes.InvalidArgument, "empty body")

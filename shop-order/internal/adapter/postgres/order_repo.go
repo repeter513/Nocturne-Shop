@@ -1,3 +1,5 @@
+// Package postgres implements order persistence in PostgreSQL.
+// Пакет postgres реализует хранение заказов в PostgreSQL.
 package postgres
 
 import (
@@ -11,14 +13,22 @@ import (
 
 var _ repository.OrderRepository = (*OrderRepo)(nil)
 
+// OrderRepo is the PostgreSQL implementation of OrderRepository.
+// OrderRepo — PostgreSQL-реализация OrderRepository.
 type OrderRepo struct {
+	// db is the connection pool wrapper for executing SQL queries.
+	// db — обёртка пула соединений для выполнения SQL-запросов.
 	db *DB
 }
 
+// NewOrderRepo constructs an OrderRepo backed by the given DB.
+// NewOrderRepo создаёт OrderRepo на базе переданной DB.
 func NewOrderRepo(db *DB) *OrderRepo {
 	return &OrderRepo{db: db}
 }
 
+// Create inserts an order and its line items in a single transaction.
+// Create вставляет заказ и его позиции в одной транзакции.
 func (r *OrderRepo) Create(ctx context.Context, order *domain.Order) error {
 	return r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		var paymentID *int64
@@ -50,6 +60,8 @@ func (r *OrderRepo) Create(ctx context.Context, order *domain.Order) error {
 	})
 }
 
+// GetByID loads an order and its items by primary key.
+// GetByID загружает заказ и его позиции по первичному ключу.
 func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*domain.Order, error) {
 	var order domain.Order
 	var paymentID *int64
@@ -77,6 +89,8 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*domain.Order, error
 	return &order, nil
 }
 
+// ListByUser returns paginated orders for a user with total count.
+// ListByUser возвращает постраничный список заказов пользователя с общим количеством.
 func (r *OrderRepo) ListByUser(
 	ctx context.Context,
 	userID int64,
@@ -139,6 +153,8 @@ func (r *OrderRepo) ListByUser(
 	return orders, total, nil
 }
 
+// UpdateStatus sets order status and optional payment ID.
+// UpdateStatus устанавливает статус заказа и необязательный ID платежа.
 func (r *OrderRepo) UpdateStatus(
 	ctx context.Context,
 	id int64,
@@ -165,6 +181,8 @@ func (r *OrderRepo) UpdateStatus(
 	return nil
 }
 
+// loadItems fetches line items grouped by order ID.
+// loadItems загружает позиции, сгруппированные по ID заказа.
 func (r *OrderRepo) loadItems(ctx context.Context, orderIDs []int64) (map[int64][]domain.OrderItem, error) {
 	rows, err := r.db.Pool().Query(ctx, `
 		SELECT order_id, product_id, quantity, name, price

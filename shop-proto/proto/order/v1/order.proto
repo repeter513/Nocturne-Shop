@@ -1,73 +1,108 @@
+// Order service — orchestrates cart, catalog reservations, and payment.
+// Сервис заказов — оркестрирует cart, резервы catalog и payment.
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
 package order.v1;
 
+option go_package = "github.com/repeter513/shop-proto/gen/go/order/v1;orderv1";
 
-option go_package = "github.com/repeter513/shop-proto/gen/go/order/v1;order1";
-
+// OrderService manages the order lifecycle from cart checkout to payment.
+// OrderService управляет жизненным циклом заказа от checkout корзины до оплаты.
 service OrderService {
+  // CreateOrder snapshots cart items, reserves stock, creates PENDING order.
+  // CreateOrder снимает snapshot корзины, резервирует остаток, создаёт заказ PENDING.
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+
+  // PayOrder triggers payment processing for a PENDING order.
+  // PayOrder запускает обработку оплаты для заказа PENDING.
   rpc PayOrder(PayOrderRequest) returns (PayOrderResponse);
+
+  // CancelOrder releases stock reservations and marks order CANCELLED.
+  // CancelOrder освобождает резервы и помечает заказ CANCELLED.
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+
+  // GetOrder returns a single order by ID (must belong to caller).
+  // GetOrder возвращает один заказ по ID (должен принадлежать вызывающему).
   rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+
+  // ListOrders returns paginated orders for the authenticated user.
+  // ListOrders возвращает постраничные заказы аутентифицированного пользователя.
   rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
 }
 
+// OrderStatus reflects payment and cancellation state.
+// OrderStatus отражает состояние оплаты и отмены.
 enum OrderStatus {
   ORDER_STATUS_UNSPECIFIED = 0;
-  ORDER_STATUS_PENDING = 1;
-  ORDER_STATUS_PAID = 2;
-  ORDER_STATUS_FAILED = 3;
-  ORDER_STATUS_CANCELLED = 4;
+  ORDER_STATUS_PENDING = 1;    // Created, awaiting payment / Создан, ожидает оплату
+  ORDER_STATUS_PAID = 2;       // Payment succeeded / Оплата прошла
+  ORDER_STATUS_FAILED = 3;     // Payment failed / Оплата не прошла
+  ORDER_STATUS_CANCELLED = 4;  // User or system cancelled / Отменён пользователем или системой
 }
 
 message Order {
   int64 order_id = 1;
   int64 user_id = 2;
   repeated OrderItem items = 3;
-  double total_price = 4;
+  int64 total_price = 4;       // Sum in minor units / Сумма в минорных единицах
   OrderStatus status = 5;
   google.protobuf.Timestamp created_at = 6;
-  int64 payment_id = 7;
+  int64 payment_id = 7;        // Set after PayOrder / Заполняется после PayOrder
 }
+
+// OrderItem is a snapshot of cart line at order creation time.
+// OrderItem — снимок позиции корзины на момент создания заказа.
 message OrderItem {
   int64 product_id = 1;
   int32 quantity = 2;
   string name = 3;
-  double price = 4;
+  int64 price = 4;
+}
 
-}
 message CreateOrderRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";          // From JWT / Из JWT
+  string idempotency_key = 2;  // Prevents duplicate orders / Предотвращает дубликаты заказов
 }
+
 message CreateOrderResponse {
   Order order = 1;
 }
+
 message PayOrderRequest {
   int64 order_id = 1;
+  string idempotency_key = 2;  // Prevents double charge / Предотвращает двойное списание
 }
+
 message PayOrderResponse {
   Order order = 1;
 }
+
 message CancelOrderRequest {
   int64 order_id = 1;
 }
+
 message CancelOrderResponse {
   Order order = 1;
 }
+
 message GetOrderRequest {
   int64 order_id = 1;
 }
+
 message GetOrderResponse {
   Order order = 1;
 }
+
 message ListOrdersRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
   int32 page = 2;
   int32 page_size = 3;
 }
+
 message ListOrdersResponse {
   repeated Order orders = 1;
   int32 total_count = 2;

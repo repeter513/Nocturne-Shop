@@ -1,8 +1,10 @@
+// Login page — email / password authentication form. / Страница входа — форма аутентификации по email / паролю.
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
+// LoginPage submits credentials and redirects to catalog on success. / LoginPage отправляет учётные данные и перенаправляет в каталог при успехе.
 export function LoginPage() {
   const { login } = useAuth()
   const { toast } = useToast()
@@ -17,6 +19,7 @@ export function LoginPage() {
     setLoading(true)
     setError('')
     try {
+      // AuthContext.login → api.login → POST /auth/login, persist tokens. / AuthContext.login → api.login → POST /auth/login, сохранение токенов.
       await login(email, password)
       toast('Вы успешно вошли')
       navigate('/')

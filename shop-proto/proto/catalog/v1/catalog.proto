@@ -1,90 +1,142 @@
+// Product catalog service — listings, stock, and reservation lifecycle.
+// Сервис каталога — товары, остатки и жизненный цикл резервирования.
 syntax = "proto3";
 
 package catalog.v1;
 
 option go_package = "github.com/repeter513/shop-proto/gen/go/catalog/v1;catalogv1";
 
+import "google/protobuf/timestamp.proto";
 
+// CatalogService exposes product data and atomic stock reservations for orders.
+// CatalogService предоставляет данные о товарах и атомарное резервирование остатков для заказов.
 service CatalogService {
+  // GetProduct returns a single product by ID.
+  // GetProduct возвращает один товар по ID.
   rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+
+  // ListProducts returns a paginated, optionally category-filtered list.
+  // ListProducts возвращает постраничный список с опциональным фильтром по категории.
   rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+
+  // ListCategories returns the category tree.
+  // ListCategories возвращает дерево категорий.
   rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+
+  // GetStock returns available quantity (physical minus active reservations).
+  // GetStock возвращает доступное количество (физический остаток минус активные резервы).
   rpc GetStock(GetStockRequest) returns (GetStockResponse);
+
+  // ReserveStock atomically locks quantity for an order; idempotency_key prevents duplicates.
+  // ReserveStock атомарно резервирует количество для заказа; idempotency_key предотвращает дубликаты.
   rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+
+  // ReleaseStock cancels a pending reservation and returns stock.
+  // ReleaseStock отменяет pending-резерв и возвращает остаток.
   rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+
+  // ConfirmReservation marks a reservation as confirmed after successful payment.
+  // ConfirmReservation помечает резерв подтверждённым после успешной оплаты.
   rpc ConfirmReservation(ConfirmReservationRequest) returns (ConfirmReservationResponse);
+}
+
+// ReservationStatus tracks reservation lifecycle for order orchestration.
+// ReservationStatus отслеживает жизненный цикл резерва для оркестрации заказов.
+enum ReservationStatus {
+  RESERVATION_STATUS_UNSPECIFIED = 0;
+  RESERVATION_STATUS_PENDING = 1;    // Stock locked, awaiting payment / Остаток заблокирован, ожидает оплату
+  RESERVATION_STATUS_CONFIRMED = 2;  // Payment succeeded, stock deducted / Оплата прошла, остаток списан
+  RESERVATION_STATUS_RELEASED = 3;   // Cancelled or expired / Отменён или истёк
+  RESERVATION_STATUS_EXPIRED = 4;
+}
+
+message Reservation {
+  string reservation_id = 1;  // UUID / UUID
+  int64 order_id = 2;
+  int64 product_id = 3;
+  int32 quantity = 4;
+  ReservationStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp expires_at = 7;  // Auto-release after TTL / Авто-освобождение по TTL
 }
 
 message Product {
   int64 id = 1;
   string name = 2;
   string description = 3;
-  double price = 4;
+  int64 price = 4;       // Minor units (kopecks) / Минорные единицы (копейки)
   int64 category_id = 5;
-  bool  active = 6;
+  bool active = 6;       // false = hidden from listings / false = скрыт из каталога
 }
 
 message Category {
   int64 id = 1;
   string name = 2;
-  int64 parent_id = 3;
+  int64 parent_id = 3;   // 0 or absent = root / 0 или отсутствует = корень
 }
 
 message Stock {
   int64 product_id = 1;
-  int32 quantity = 2;
+  int32 quantity = 2;    // Available after subtracting reservations / Доступно после вычета резервов
 }
 
 message GetProductRequest {
   int64 product_id = 1;
-
 }
+
 message GetProductResponse {
   Product product = 1;
 }
+
 message ListProductsRequest {
-  int32 page = 1;
-  int32 page_size = 2;
-  int64 category_id = 3;
+  int32 page = 1;          // 1-based page number / Номер страницы с 1
+  int32 page_size = 2;     // Max 100 / Максимум 100
+  int64 category_id = 3;   // 0 = all categories / 0 = все категории
 }
+
 message ListProductsResponse {
   repeated Product products = 1;
   int32 total_count = 2;
 }
-message ListCategoriesRequest {
 
+message ListCategoriesRequest {
 }
+
 message ListCategoriesResponse {
   repeated Category categories = 1;
 }
-message  GetStockRequest {
+
+message GetStockRequest {
   int64 product_id = 1;
 }
+
 message GetStockResponse {
   Stock stock = 1;
 }
-message  ReserveStockRequest {
+
+message ReserveStockRequest {
   int64 product_id = 1;
   int32 quantity = 2;
   int64 order_id = 3;
+  string idempotency_key = 4;  // Same key returns existing reservation / Тот же ключ возвращает существующий резерв
 }
+
 message ReserveStockResponse {
-  bool success = 1;
+  Reservation reservation = 1;
 }
+
 message ReleaseStockRequest {
-  int64 product_id = 1;
-  int32 quantity = 2;
-  int64 order_id = 3;
+  string reservation_id = 1;
 }
+
 message ReleaseStockResponse {
-  bool success = 1;
+  Reservation reservation = 1;
 }
 
 message ConfirmReservationRequest {
-  int64 order_id = 1;
+  string reservation_id = 1;
 }
 
 message ConfirmReservationResponse {
-  bool success = 1;
+  Reservation reservation = 1;
 }
-

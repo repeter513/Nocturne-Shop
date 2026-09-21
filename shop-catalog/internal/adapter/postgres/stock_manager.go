@@ -1,3 +1,5 @@
+// Package postgres implements atomic stock reserve, release, and confirm.
+// Пакет postgres реализует атомарное резервирование, снятие и подтверждение остатков.
 package postgres
 
 import (
@@ -10,16 +12,30 @@ import (
 	"github.com/repeter513/shop-catalog/internal/domain"
 )
 
+// StockManager performs transactional stock reservation operations.
+// StockManager выполняет транзакционные операции резервирования остатков.
 type StockManager struct {
-	db   *DB
+	// db runs WithTx for atomic multi-statement operations.
+	// db выполняет WithTx для атомарных многоstatement операций.
+	db *DB
+	// prod locks product rows and decrements physical stock on confirm.
+	// prod блокирует строки товаров и уменьшает физический остаток при confirm.
 	prod *ProductRepo
-	res  *ReservationRepo
+	// res reads/writes reservation rows and sums active reserved quantities.
+	// res читает/пишет строки резервов и суммирует active зарезервированные количества.
+	res *ReservationRepo
 }
 
+// NewStockManager creates a StockManager with product and reservation repos.
+// NewStockManager создаёт StockManager с репозиториями товаров и резервов.
 func NewStockManager(db *DB, prod *ProductRepo, res *ReservationRepo) *StockManager {
 	return &StockManager{db: db, prod: prod, res: res}
 }
 
+// ReserveWithTransaction creates or merges a stock reservation for an order.
+// ReserveWithTransaction создаёт или объединяет резерв остатков для заказа.
+// Flow: FOR UPDATE existing by order_id → merge OR lock products + check available → INSERT.
+// Flow: FOR UPDATE existing по order_id → merge ИЛИ lock products + check available → INSERT.
 func (m *StockManager) ReserveWithTransaction(
 	ctx context.Context,
 	items map[int64]int32,
@@ -34,6 +50,8 @@ func (m *StockManager) ReserveWithTransaction(
 	}
 
 	err := m.db.WithTx(ctx, func(tx pgx.Tx) error {
+		// Step 1: idempotent path — if reservation exists for order_id, merge new items.
+		// Шаг 1: идемпотентный путь — если резерв для order_id существует, объединить новые позиции.
 		existing, err := m.res.scanOne(ctx, tx, `
 			SELECT id, order_id, items, status, expires_at, created_at
 			FROM stock_reservations WHERE order_id = $1 FOR UPDATE`, orderID)
@@ -44,6 +62,8 @@ func (m *StockManager) ReserveWithTransaction(
 			return m.mergeReservation(ctx, tx, existing, items, ttlSeconds, reservation)
 		}
 
+		// Step 2: new reservation — lock each product and verify available >= qty.
+		// Шаг 2: новый резерв — блокировка каждого товара и проверка available >= qty.
 		for productID, qty := range items {
 			if qty <= 0 {
 				return domain.ErrInsufficientStock
@@ -61,6 +81,8 @@ func (m *StockManager) ReserveWithTransaction(
 			}
 		}
 
+		// Step 3: insert reservation row; physical stock unchanged until confirm.
+		// Шаг 3: вставка строки резерва; физический остаток не меняется до confirm.
 		itemsJSON, err := json.Marshal(items)
 		if err != nil {
 			return err
@@ -78,6 +100,10 @@ func (m *StockManager) ReserveWithTransaction(
 	return reservation, nil
 }
 
+// mergeReservation adds items to an existing active reservation for the same order.
+// mergeReservation добавляет позиции к существующему активному резерву того же заказа.
+// Extends expires_at; re-validates available stock accounting for alreadyHeld in this reservation.
+// Продлевает expires_at; повторно проверяет available с учётом alreadyHeld в этом резерве.
 func (m *StockManager) mergeReservation(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -135,6 +161,10 @@ func (m *StockManager) mergeReservation(
 	return nil
 }
 
+// ReleaseWithTransaction removes items from a reservation or releases it entirely.
+// ReleaseWithTransaction снимает позиции из резерва или освобождает его полностью.
+// Empty items map releases all; status → released or partially_released.
+// Пустой items map снимает всё; status → released или partially_released.
 func (m *StockManager) ReleaseWithTransaction(ctx context.Context, reservationID int64, items map[int64]int32) error {
 	return m.db.WithTx(ctx, func(tx pgx.Tx) error {
 		reservation, err := m.res.scanOne(ctx, tx, `
@@ -188,6 +218,10 @@ func (m *StockManager) ReleaseWithTransaction(ctx context.Context, reservationID
 	})
 }
 
+// ConfirmWithTransaction deducts physical stock and marks the reservation confirmed.
+// ConfirmWithTransaction списывает физический остаток и помечает резерв подтверждённым.
+// Error paths: not found, wrong status, expired expires_at, insufficient stock on decrement.
+// Пути ошибок: not found, неверный status, просроченный expires_at, insufficient stock при decrement.
 func (m *StockManager) ConfirmWithTransaction(ctx context.Context, reservationID int64) error {
 	return m.db.WithTx(ctx, func(tx pgx.Tx) error {
 		reservation, err := m.res.scanOne(ctx, tx, `

@@ -9,6 +9,7 @@ package catalogv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -21,12 +22,159 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ReservationStatus int32
+
+const (
+	ReservationStatus_RESERVATION_STATUS_UNSPECIFIED ReservationStatus = 0
+	ReservationStatus_RESERVATION_STATUS_PENDING     ReservationStatus = 1
+	ReservationStatus_RESERVATION_STATUS_CONFIRMED   ReservationStatus = 2
+	ReservationStatus_RESERVATION_STATUS_RELEASED    ReservationStatus = 3
+	ReservationStatus_RESERVATION_STATUS_EXPIRED     ReservationStatus = 4
+)
+
+// Enum value maps for ReservationStatus.
+var (
+	ReservationStatus_name = map[int32]string{
+		0: "RESERVATION_STATUS_UNSPECIFIED",
+		1: "RESERVATION_STATUS_PENDING",
+		2: "RESERVATION_STATUS_CONFIRMED",
+		3: "RESERVATION_STATUS_RELEASED",
+		4: "RESERVATION_STATUS_EXPIRED",
+	}
+	ReservationStatus_value = map[string]int32{
+		"RESERVATION_STATUS_UNSPECIFIED": 0,
+		"RESERVATION_STATUS_PENDING":     1,
+		"RESERVATION_STATUS_CONFIRMED":   2,
+		"RESERVATION_STATUS_RELEASED":    3,
+		"RESERVATION_STATUS_EXPIRED":     4,
+	}
+)
+
+func (x ReservationStatus) Enum() *ReservationStatus {
+	p := new(ReservationStatus)
+	*p = x
+	return p
+}
+
+func (x ReservationStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReservationStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_catalog_v1_catalog_proto_enumTypes[0].Descriptor()
+}
+
+func (ReservationStatus) Type() protoreflect.EnumType {
+	return &file_catalog_v1_catalog_proto_enumTypes[0]
+}
+
+func (x ReservationStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReservationStatus.Descriptor instead.
+func (ReservationStatus) EnumDescriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
+}
+
+type Reservation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	OrderId       int64                  `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ProductId     int64                  `protobuf:"varint,3,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	Quantity      int32                  `protobuf:"varint,4,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	Status        ReservationStatus      `protobuf:"varint,5,opt,name=status,proto3,enum=catalog.v1.ReservationStatus" json:"status,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Reservation) Reset() {
+	*x = Reservation{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Reservation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Reservation) ProtoMessage() {}
+
+func (x *Reservation) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Reservation.ProtoReflect.Descriptor instead.
+func (*Reservation) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Reservation) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *Reservation) GetOrderId() int64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+func (x *Reservation) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *Reservation) GetQuantity() int32 {
+	if x != nil {
+		return x.Quantity
+	}
+	return 0
+}
+
+func (x *Reservation) GetStatus() ReservationStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ReservationStatus_RESERVATION_STATUS_UNSPECIFIED
+}
+
+func (x *Reservation) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Reservation) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
 type Product struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Price         float64                `protobuf:"fixed64,4,opt,name=price,proto3" json:"price,omitempty"`
+	Price         int64                  `protobuf:"varint,4,opt,name=price,proto3" json:"price,omitempty"`
 	CategoryId    int64                  `protobuf:"varint,5,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
 	Active        bool                   `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -35,7 +183,7 @@ type Product struct {
 
 func (x *Product) Reset() {
 	*x = Product{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[0]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +195,7 @@ func (x *Product) String() string {
 func (*Product) ProtoMessage() {}
 
 func (x *Product) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[0]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +208,7 @@ func (x *Product) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Product.ProtoReflect.Descriptor instead.
 func (*Product) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Product) GetId() int64 {
@@ -84,7 +232,7 @@ func (x *Product) GetDescription() string {
 	return ""
 }
 
-func (x *Product) GetPrice() float64 {
+func (x *Product) GetPrice() int64 {
 	if x != nil {
 		return x.Price
 	}
@@ -116,7 +264,7 @@ type Category struct {
 
 func (x *Category) Reset() {
 	*x = Category{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -128,7 +276,7 @@ func (x *Category) String() string {
 func (*Category) ProtoMessage() {}
 
 func (x *Category) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +289,7 @@ func (x *Category) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Category.ProtoReflect.Descriptor instead.
 func (*Category) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Category) GetId() int64 {
@@ -175,7 +323,7 @@ type Stock struct {
 
 func (x *Stock) Reset() {
 	*x = Stock{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -187,7 +335,7 @@ func (x *Stock) String() string {
 func (*Stock) ProtoMessage() {}
 
 func (x *Stock) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,7 +348,7 @@ func (x *Stock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Stock.ProtoReflect.Descriptor instead.
 func (*Stock) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{2}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Stock) GetProductId() int64 {
@@ -226,7 +374,7 @@ type GetProductRequest struct {
 
 func (x *GetProductRequest) Reset() {
 	*x = GetProductRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -238,7 +386,7 @@ func (x *GetProductRequest) String() string {
 func (*GetProductRequest) ProtoMessage() {}
 
 func (x *GetProductRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -251,7 +399,7 @@ func (x *GetProductRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProductRequest.ProtoReflect.Descriptor instead.
 func (*GetProductRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{3}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetProductRequest) GetProductId() int64 {
@@ -270,7 +418,7 @@ type GetProductResponse struct {
 
 func (x *GetProductResponse) Reset() {
 	*x = GetProductResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -282,7 +430,7 @@ func (x *GetProductResponse) String() string {
 func (*GetProductResponse) ProtoMessage() {}
 
 func (x *GetProductResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -295,7 +443,7 @@ func (x *GetProductResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProductResponse.ProtoReflect.Descriptor instead.
 func (*GetProductResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{4}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetProductResponse) GetProduct() *Product {
@@ -316,7 +464,7 @@ type ListProductsRequest struct {
 
 func (x *ListProductsRequest) Reset() {
 	*x = ListProductsRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -328,7 +476,7 @@ func (x *ListProductsRequest) String() string {
 func (*ListProductsRequest) ProtoMessage() {}
 
 func (x *ListProductsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -341,7 +489,7 @@ func (x *ListProductsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProductsRequest.ProtoReflect.Descriptor instead.
 func (*ListProductsRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListProductsRequest) GetPage() int32 {
@@ -375,7 +523,7 @@ type ListProductsResponse struct {
 
 func (x *ListProductsResponse) Reset() {
 	*x = ListProductsResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -387,7 +535,7 @@ func (x *ListProductsResponse) String() string {
 func (*ListProductsResponse) ProtoMessage() {}
 
 func (x *ListProductsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -400,7 +548,7 @@ func (x *ListProductsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProductsResponse.ProtoReflect.Descriptor instead.
 func (*ListProductsResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{6}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListProductsResponse) GetProducts() []*Product {
@@ -425,7 +573,7 @@ type ListCategoriesRequest struct {
 
 func (x *ListCategoriesRequest) Reset() {
 	*x = ListCategoriesRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -437,7 +585,7 @@ func (x *ListCategoriesRequest) String() string {
 func (*ListCategoriesRequest) ProtoMessage() {}
 
 func (x *ListCategoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -450,7 +598,7 @@ func (x *ListCategoriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCategoriesRequest.ProtoReflect.Descriptor instead.
 func (*ListCategoriesRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{7}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{8}
 }
 
 type ListCategoriesResponse struct {
@@ -462,7 +610,7 @@ type ListCategoriesResponse struct {
 
 func (x *ListCategoriesResponse) Reset() {
 	*x = ListCategoriesResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -474,7 +622,7 @@ func (x *ListCategoriesResponse) String() string {
 func (*ListCategoriesResponse) ProtoMessage() {}
 
 func (x *ListCategoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -487,7 +635,7 @@ func (x *ListCategoriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCategoriesResponse.ProtoReflect.Descriptor instead.
 func (*ListCategoriesResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{8}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListCategoriesResponse) GetCategories() []*Category {
@@ -506,7 +654,7 @@ type GetStockRequest struct {
 
 func (x *GetStockRequest) Reset() {
 	*x = GetStockRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +666,7 @@ func (x *GetStockRequest) String() string {
 func (*GetStockRequest) ProtoMessage() {}
 
 func (x *GetStockRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +679,7 @@ func (x *GetStockRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStockRequest.ProtoReflect.Descriptor instead.
 func (*GetStockRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{9}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetStockRequest) GetProductId() int64 {
@@ -550,7 +698,7 @@ type GetStockResponse struct {
 
 func (x *GetStockResponse) Reset() {
 	*x = GetStockResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -562,7 +710,7 @@ func (x *GetStockResponse) String() string {
 func (*GetStockResponse) ProtoMessage() {}
 
 func (x *GetStockResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -575,7 +723,7 @@ func (x *GetStockResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStockResponse.ProtoReflect.Descriptor instead.
 func (*GetStockResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetStockResponse) GetStock() *Stock {
@@ -586,17 +734,18 @@ func (x *GetStockResponse) GetStock() *Stock {
 }
 
 type ReserveStockRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProductId     int64                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	OrderId       int64                  `protobuf:"varint,3,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ProductId      int64                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	Quantity       int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	OrderId        int64                  `protobuf:"varint,3,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,4,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ReserveStockRequest) Reset() {
 	*x = ReserveStockRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -608,7 +757,7 @@ func (x *ReserveStockRequest) String() string {
 func (*ReserveStockRequest) ProtoMessage() {}
 
 func (x *ReserveStockRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -621,7 +770,7 @@ func (x *ReserveStockRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReserveStockRequest.ProtoReflect.Descriptor instead.
 func (*ReserveStockRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ReserveStockRequest) GetProductId() int64 {
@@ -645,16 +794,23 @@ func (x *ReserveStockRequest) GetOrderId() int64 {
 	return 0
 }
 
+func (x *ReserveStockRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
 type ReserveStockResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Reservation   *Reservation           `protobuf:"bytes,1,opt,name=reservation,proto3" json:"reservation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReserveStockResponse) Reset() {
 	*x = ReserveStockResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +822,7 @@ func (x *ReserveStockResponse) String() string {
 func (*ReserveStockResponse) ProtoMessage() {}
 
 func (x *ReserveStockResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,28 +835,26 @@ func (x *ReserveStockResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReserveStockResponse.ProtoReflect.Descriptor instead.
 func (*ReserveStockResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{12}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ReserveStockResponse) GetSuccess() bool {
+func (x *ReserveStockResponse) GetReservation() *Reservation {
 	if x != nil {
-		return x.Success
+		return x.Reservation
 	}
-	return false
+	return nil
 }
 
 type ReleaseStockRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProductId     int64                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	OrderId       int64                  `protobuf:"varint,3,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReleaseStockRequest) Reset() {
 	*x = ReleaseStockRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -712,7 +866,7 @@ func (x *ReleaseStockRequest) String() string {
 func (*ReleaseStockRequest) ProtoMessage() {}
 
 func (x *ReleaseStockRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -725,40 +879,26 @@ func (x *ReleaseStockRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseStockRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseStockRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{13}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *ReleaseStockRequest) GetProductId() int64 {
+func (x *ReleaseStockRequest) GetReservationId() string {
 	if x != nil {
-		return x.ProductId
+		return x.ReservationId
 	}
-	return 0
-}
-
-func (x *ReleaseStockRequest) GetQuantity() int32 {
-	if x != nil {
-		return x.Quantity
-	}
-	return 0
-}
-
-func (x *ReleaseStockRequest) GetOrderId() int64 {
-	if x != nil {
-		return x.OrderId
-	}
-	return 0
+	return ""
 }
 
 type ReleaseStockResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Reservation   *Reservation           `protobuf:"bytes,1,opt,name=reservation,proto3" json:"reservation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReleaseStockResponse) Reset() {
 	*x = ReleaseStockResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -770,7 +910,7 @@ func (x *ReleaseStockResponse) String() string {
 func (*ReleaseStockResponse) ProtoMessage() {}
 
 func (x *ReleaseStockResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -783,26 +923,26 @@ func (x *ReleaseStockResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseStockResponse.ProtoReflect.Descriptor instead.
 func (*ReleaseStockResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{14}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *ReleaseStockResponse) GetSuccess() bool {
+func (x *ReleaseStockResponse) GetReservation() *Reservation {
 	if x != nil {
-		return x.Success
+		return x.Reservation
 	}
-	return false
+	return nil
 }
 
 type ConfirmReservationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrderId       int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ConfirmReservationRequest) Reset() {
 	*x = ConfirmReservationRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -814,7 +954,7 @@ func (x *ConfirmReservationRequest) String() string {
 func (*ConfirmReservationRequest) ProtoMessage() {}
 
 func (x *ConfirmReservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -827,26 +967,26 @@ func (x *ConfirmReservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmReservationRequest.ProtoReflect.Descriptor instead.
 func (*ConfirmReservationRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{15}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *ConfirmReservationRequest) GetOrderId() int64 {
+func (x *ConfirmReservationRequest) GetReservationId() string {
 	if x != nil {
-		return x.OrderId
+		return x.ReservationId
 	}
-	return 0
+	return ""
 }
 
 type ConfirmReservationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Reservation   *Reservation           `protobuf:"bytes,1,opt,name=reservation,proto3" json:"reservation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ConfirmReservationResponse) Reset() {
 	*x = ConfirmReservationResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -858,7 +998,7 @@ func (x *ConfirmReservationResponse) String() string {
 func (*ConfirmReservationResponse) ProtoMessage() {}
 
 func (x *ConfirmReservationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -871,14 +1011,14 @@ func (x *ConfirmReservationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmReservationResponse.ProtoReflect.Descriptor instead.
 func (*ConfirmReservationResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{16}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *ConfirmReservationResponse) GetSuccess() bool {
+func (x *ConfirmReservationResponse) GetReservation() *Reservation {
 	if x != nil {
-		return x.Success
+		return x.Reservation
 	}
-	return false
+	return nil
 }
 
 var File_catalog_v1_catalog_proto protoreflect.FileDescriptor
@@ -886,12 +1026,23 @@ var File_catalog_v1_catalog_proto protoreflect.FileDescriptor
 const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\n" +
 	"\x18catalog/v1/catalog.proto\x12\n" +
-	"catalog.v1\"\x9e\x01\n" +
+	"catalog.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb7\x02\n" +
+	"\vReservation\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x12\x19\n" +
+	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x03 \x01(\x03R\tproductId\x12\x1a\n" +
+	"\bquantity\x18\x04 \x01(\x05R\bquantity\x125\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x1d.catalog.v1.ReservationStatusR\x06status\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x9e\x01\n" +
 	"\aProduct\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x14\n" +
-	"\x05price\x18\x04 \x01(\x01R\x05price\x12\x1f\n" +
+	"\x05price\x18\x04 \x01(\x03R\x05price\x12\x1f\n" +
 	"\vcategory_id\x18\x05 \x01(\x03R\n" +
 	"categoryId\x12\x16\n" +
 	"\x06active\x18\x06 \x01(\bR\x06active\"K\n" +
@@ -926,25 +1077,29 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\n" +
 	"product_id\x18\x01 \x01(\x03R\tproductId\";\n" +
 	"\x10GetStockResponse\x12'\n" +
-	"\x05stock\x18\x01 \x01(\v2\x11.catalog.v1.StockR\x05stock\"k\n" +
+	"\x05stock\x18\x01 \x01(\v2\x11.catalog.v1.StockR\x05stock\"\x94\x01\n" +
 	"\x13ReserveStockRequest\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\x03R\tproductId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x19\n" +
-	"\border_id\x18\x03 \x01(\x03R\aorderId\"0\n" +
-	"\x14ReserveStockResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"k\n" +
-	"\x13ReleaseStockRequest\x12\x1d\n" +
-	"\n" +
-	"product_id\x18\x01 \x01(\x03R\tproductId\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x19\n" +
-	"\border_id\x18\x03 \x01(\x03R\aorderId\"0\n" +
-	"\x14ReleaseStockResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"6\n" +
-	"\x19ConfirmReservationRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\x03R\aorderId\"6\n" +
-	"\x1aConfirmReservationResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xdb\x04\n" +
+	"\border_id\x18\x03 \x01(\x03R\aorderId\x12'\n" +
+	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\"Q\n" +
+	"\x14ReserveStockResponse\x129\n" +
+	"\vreservation\x18\x01 \x01(\v2\x17.catalog.v1.ReservationR\vreservation\"<\n" +
+	"\x13ReleaseStockRequest\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\"Q\n" +
+	"\x14ReleaseStockResponse\x129\n" +
+	"\vreservation\x18\x01 \x01(\v2\x17.catalog.v1.ReservationR\vreservation\"B\n" +
+	"\x19ConfirmReservationRequest\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\"W\n" +
+	"\x1aConfirmReservationResponse\x129\n" +
+	"\vreservation\x18\x01 \x01(\v2\x17.catalog.v1.ReservationR\vreservation*\xba\x01\n" +
+	"\x11ReservationStatus\x12\"\n" +
+	"\x1eRESERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aRESERVATION_STATUS_PENDING\x10\x01\x12 \n" +
+	"\x1cRESERVATION_STATUS_CONFIRMED\x10\x02\x12\x1f\n" +
+	"\x1bRESERVATION_STATUS_RELEASED\x10\x03\x12\x1e\n" +
+	"\x1aRESERVATION_STATUS_EXPIRED\x10\x042\xdb\x04\n" +
 	"\x0eCatalogService\x12K\n" +
 	"\n" +
 	"GetProduct\x12\x1d.catalog.v1.GetProductRequest\x1a\x1e.catalog.v1.GetProductResponse\x12Q\n" +
@@ -967,50 +1122,60 @@ func file_catalog_v1_catalog_proto_rawDescGZIP() []byte {
 	return file_catalog_v1_catalog_proto_rawDescData
 }
 
-var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_catalog_v1_catalog_proto_goTypes = []any{
-	(*Product)(nil),                    // 0: catalog.v1.Product
-	(*Category)(nil),                   // 1: catalog.v1.Category
-	(*Stock)(nil),                      // 2: catalog.v1.Stock
-	(*GetProductRequest)(nil),          // 3: catalog.v1.GetProductRequest
-	(*GetProductResponse)(nil),         // 4: catalog.v1.GetProductResponse
-	(*ListProductsRequest)(nil),        // 5: catalog.v1.ListProductsRequest
-	(*ListProductsResponse)(nil),       // 6: catalog.v1.ListProductsResponse
-	(*ListCategoriesRequest)(nil),      // 7: catalog.v1.ListCategoriesRequest
-	(*ListCategoriesResponse)(nil),     // 8: catalog.v1.ListCategoriesResponse
-	(*GetStockRequest)(nil),            // 9: catalog.v1.GetStockRequest
-	(*GetStockResponse)(nil),           // 10: catalog.v1.GetStockResponse
-	(*ReserveStockRequest)(nil),        // 11: catalog.v1.ReserveStockRequest
-	(*ReserveStockResponse)(nil),       // 12: catalog.v1.ReserveStockResponse
-	(*ReleaseStockRequest)(nil),        // 13: catalog.v1.ReleaseStockRequest
-	(*ReleaseStockResponse)(nil),       // 14: catalog.v1.ReleaseStockResponse
-	(*ConfirmReservationRequest)(nil),  // 15: catalog.v1.ConfirmReservationRequest
-	(*ConfirmReservationResponse)(nil), // 16: catalog.v1.ConfirmReservationResponse
+	(ReservationStatus)(0),             // 0: catalog.v1.ReservationStatus
+	(*Reservation)(nil),                // 1: catalog.v1.Reservation
+	(*Product)(nil),                    // 2: catalog.v1.Product
+	(*Category)(nil),                   // 3: catalog.v1.Category
+	(*Stock)(nil),                      // 4: catalog.v1.Stock
+	(*GetProductRequest)(nil),          // 5: catalog.v1.GetProductRequest
+	(*GetProductResponse)(nil),         // 6: catalog.v1.GetProductResponse
+	(*ListProductsRequest)(nil),        // 7: catalog.v1.ListProductsRequest
+	(*ListProductsResponse)(nil),       // 8: catalog.v1.ListProductsResponse
+	(*ListCategoriesRequest)(nil),      // 9: catalog.v1.ListCategoriesRequest
+	(*ListCategoriesResponse)(nil),     // 10: catalog.v1.ListCategoriesResponse
+	(*GetStockRequest)(nil),            // 11: catalog.v1.GetStockRequest
+	(*GetStockResponse)(nil),           // 12: catalog.v1.GetStockResponse
+	(*ReserveStockRequest)(nil),        // 13: catalog.v1.ReserveStockRequest
+	(*ReserveStockResponse)(nil),       // 14: catalog.v1.ReserveStockResponse
+	(*ReleaseStockRequest)(nil),        // 15: catalog.v1.ReleaseStockRequest
+	(*ReleaseStockResponse)(nil),       // 16: catalog.v1.ReleaseStockResponse
+	(*ConfirmReservationRequest)(nil),  // 17: catalog.v1.ConfirmReservationRequest
+	(*ConfirmReservationResponse)(nil), // 18: catalog.v1.ConfirmReservationResponse
+	(*timestamppb.Timestamp)(nil),      // 19: google.protobuf.Timestamp
 }
 var file_catalog_v1_catalog_proto_depIdxs = []int32{
-	0,  // 0: catalog.v1.GetProductResponse.product:type_name -> catalog.v1.Product
-	0,  // 1: catalog.v1.ListProductsResponse.products:type_name -> catalog.v1.Product
-	1,  // 2: catalog.v1.ListCategoriesResponse.categories:type_name -> catalog.v1.Category
-	2,  // 3: catalog.v1.GetStockResponse.stock:type_name -> catalog.v1.Stock
-	3,  // 4: catalog.v1.CatalogService.GetProduct:input_type -> catalog.v1.GetProductRequest
-	5,  // 5: catalog.v1.CatalogService.ListProducts:input_type -> catalog.v1.ListProductsRequest
-	7,  // 6: catalog.v1.CatalogService.ListCategories:input_type -> catalog.v1.ListCategoriesRequest
-	9,  // 7: catalog.v1.CatalogService.GetStock:input_type -> catalog.v1.GetStockRequest
-	11, // 8: catalog.v1.CatalogService.ReserveStock:input_type -> catalog.v1.ReserveStockRequest
-	13, // 9: catalog.v1.CatalogService.ReleaseStock:input_type -> catalog.v1.ReleaseStockRequest
-	15, // 10: catalog.v1.CatalogService.ConfirmReservation:input_type -> catalog.v1.ConfirmReservationRequest
-	4,  // 11: catalog.v1.CatalogService.GetProduct:output_type -> catalog.v1.GetProductResponse
-	6,  // 12: catalog.v1.CatalogService.ListProducts:output_type -> catalog.v1.ListProductsResponse
-	8,  // 13: catalog.v1.CatalogService.ListCategories:output_type -> catalog.v1.ListCategoriesResponse
-	10, // 14: catalog.v1.CatalogService.GetStock:output_type -> catalog.v1.GetStockResponse
-	12, // 15: catalog.v1.CatalogService.ReserveStock:output_type -> catalog.v1.ReserveStockResponse
-	14, // 16: catalog.v1.CatalogService.ReleaseStock:output_type -> catalog.v1.ReleaseStockResponse
-	16, // 17: catalog.v1.CatalogService.ConfirmReservation:output_type -> catalog.v1.ConfirmReservationResponse
-	11, // [11:18] is the sub-list for method output_type
-	4,  // [4:11] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	0,  // 0: catalog.v1.Reservation.status:type_name -> catalog.v1.ReservationStatus
+	19, // 1: catalog.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
+	19, // 2: catalog.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
+	2,  // 3: catalog.v1.GetProductResponse.product:type_name -> catalog.v1.Product
+	2,  // 4: catalog.v1.ListProductsResponse.products:type_name -> catalog.v1.Product
+	3,  // 5: catalog.v1.ListCategoriesResponse.categories:type_name -> catalog.v1.Category
+	4,  // 6: catalog.v1.GetStockResponse.stock:type_name -> catalog.v1.Stock
+	1,  // 7: catalog.v1.ReserveStockResponse.reservation:type_name -> catalog.v1.Reservation
+	1,  // 8: catalog.v1.ReleaseStockResponse.reservation:type_name -> catalog.v1.Reservation
+	1,  // 9: catalog.v1.ConfirmReservationResponse.reservation:type_name -> catalog.v1.Reservation
+	5,  // 10: catalog.v1.CatalogService.GetProduct:input_type -> catalog.v1.GetProductRequest
+	7,  // 11: catalog.v1.CatalogService.ListProducts:input_type -> catalog.v1.ListProductsRequest
+	9,  // 12: catalog.v1.CatalogService.ListCategories:input_type -> catalog.v1.ListCategoriesRequest
+	11, // 13: catalog.v1.CatalogService.GetStock:input_type -> catalog.v1.GetStockRequest
+	13, // 14: catalog.v1.CatalogService.ReserveStock:input_type -> catalog.v1.ReserveStockRequest
+	15, // 15: catalog.v1.CatalogService.ReleaseStock:input_type -> catalog.v1.ReleaseStockRequest
+	17, // 16: catalog.v1.CatalogService.ConfirmReservation:input_type -> catalog.v1.ConfirmReservationRequest
+	6,  // 17: catalog.v1.CatalogService.GetProduct:output_type -> catalog.v1.GetProductResponse
+	8,  // 18: catalog.v1.CatalogService.ListProducts:output_type -> catalog.v1.ListProductsResponse
+	10, // 19: catalog.v1.CatalogService.ListCategories:output_type -> catalog.v1.ListCategoriesResponse
+	12, // 20: catalog.v1.CatalogService.GetStock:output_type -> catalog.v1.GetStockResponse
+	14, // 21: catalog.v1.CatalogService.ReserveStock:output_type -> catalog.v1.ReserveStockResponse
+	16, // 22: catalog.v1.CatalogService.ReleaseStock:output_type -> catalog.v1.ReleaseStockResponse
+	18, // 23: catalog.v1.CatalogService.ConfirmReservation:output_type -> catalog.v1.ConfirmReservationResponse
+	17, // [17:24] is the sub-list for method output_type
+	10, // [10:17] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_catalog_v1_catalog_proto_init() }
@@ -1023,13 +1188,14 @@ func file_catalog_v1_catalog_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catalog_v1_catalog_proto_rawDesc), len(file_catalog_v1_catalog_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   17,
+			NumEnums:      1,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_catalog_v1_catalog_proto_goTypes,
 		DependencyIndexes: file_catalog_v1_catalog_proto_depIdxs,
+		EnumInfos:         file_catalog_v1_catalog_proto_enumTypes,
 		MessageInfos:      file_catalog_v1_catalog_proto_msgTypes,
 	}.Build()
 	File_catalog_v1_catalog_proto = out.File

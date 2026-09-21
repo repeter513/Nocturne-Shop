@@ -1,3 +1,5 @@
+-- Remove seeded cart items.
+-- Удаление тестовых позиций корзины.
 DELETE FROM cart_items
 WHERE (user_id, product_id) IN (
     (1, 1),

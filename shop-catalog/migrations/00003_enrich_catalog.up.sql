@@ -1,17 +1,28 @@
+-- EN: Enrich catalog — localized descriptions, new categories, and additional products.
+-- RU: Расширение каталога — локализованные описания, новые категории и дополнительные товары.
+
+-- EN: Update root category descriptions to Russian marketing copy.
+-- RU: Обновление описаний корневых категорий на русский маркетинговый текст.
 UPDATE categories SET description = 'Компьютерная периферия, мониторы и накопители' WHERE id = 1;
 UPDATE categories SET description = 'Техническая литература и учебники' WHERE id = 2;
 
+-- EN: New sub-categories Audio (3), Home & Office (4), Accessories (5).
+-- RU: Новые подкategории Audio (3), Home & Office (4), Accessories (5).
 INSERT INTO categories (name, description) VALUES
     ('Audio', 'Наушники и аудиотехника'),
     ('Home & Office', 'Товары для дома и рабочего места'),
     ('Accessories', 'Аксессуары и мелкая электроника');
 
+-- EN: Enrich existing product descriptions with detailed multi-paragraph copy.
+-- RU: Расширение описаний существующих товаров подробным многоабзацным текстом.
 UPDATE products SET description = E'Эргономичная беспроводная мышь для ежедневной работы.\n\nСенсор 1600 DPI, бесшумные кнопки, автономность до 12 месяцев на одной AA-батарейке. Корпус из матового пластика, подходит для правой и левой руки.\n\nКомплектация: мышь, USB-приёмник, батарейка, документация.' WHERE id = 1;
 
 UPDATE products SET description = E'Механическая клавиатура с RGB-подсветкой и переключателями Cherry MX Brown.\n\nПолноразмерная раскладка, алюминиевая верхняя панель, съёмный USB-C кабель. Поддержка N-key rollover, программируемые макросы через фирменное ПО.\n\nПодходит для программирования, игр и длительного набора текста.' WHERE id = 2;
 
 UPDATE products SET description = E'Классическое руководство по языку Go от William Kennedy и Brian Ketelsen.\n\nПошаговое изучение: типы, goroutines, channels, тестирование, работа с сетью и БД. Множество практических примеров и упражнений.\n\nПодходит начинающим и тем, кто переходит с других языков. Твёрдый переплёт, 264 страницы.' WHERE id = 3;
 
+-- EN: Insert additional products across categories 1–5 with stock for reservation testing.
+-- RU: Вставка дополнительных товаров в категории 1–5 с остатками для тестирования резервов.
 INSERT INTO products (name, description, price, category_id, stock) VALUES
     ('Sony WH-1000XM5', E'Флагманские наушники с активным шумоподавлением.\n\nДва процессора HD Noise Canceling, 30 часов автономной работы, быстрая зарядка 3 мин = 3 часа. Мягкие амбушюры, складывающаяся конструкция.\n\nПоддержка LDAC, multipoint-подключение к двум устройствам одновременно.', 349.99, 3, 40),
     ('Logitech C920', E'Full HD веб-кamera 1080p/30fps для стримов и видеозвонков.\n\nАвтофокус, стереомикрофоны с шумоподавлением, совместимость с Zoom, Teams, OBS. Крепление на монитор или штатив.\n\nPlug-and-play через USB-A, не требует драйверов на macOS и Windows.', 79.99, 1, 60),

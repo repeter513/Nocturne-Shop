@@ -1,3 +1,4 @@
+// Shopping cart page — item list, quantity controls, checkout. / Страница корзины — список позиций, изменение количества, оформление заказа.
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
@@ -7,6 +8,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { useRequireAuth } from '../hooks/useRequireAuth'
 
+// CartPage manages cart items and creates an order on checkout. / CartPage управляет позициями корзины и создаёт заказ при оформлении.
 export function CartPage() {
   const { user, authLoading } = useRequireAuth()
   const { toast } = useToast()
@@ -22,6 +24,7 @@ export function CartPage() {
     setLoading(true)
     setError('')
     try {
+      // GET /cart — requires JWT from AuthContext. / GET /cart — требует JWT из AuthContext.
       setCart(await api.getCart())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ошибка')
@@ -30,11 +33,13 @@ export function CartPage() {
     }
   }, [])
 
+  // Wait for auth guard to pass, then load cart. / Ждём прохождения auth guard, затем загружаем корзину.
   useEffect(() => {
     if (authLoading || !user) return
     load()
   }, [user, authLoading, load])
 
+  // Applies a cart mutation and syncs header badge count. / Применяет мутацию корзины и синхронизирует счётчик в шапке.
   const syncCart = async (fn: () => Promise<Cart>) => {
     const next = await fn()
     setCart(next)
@@ -86,6 +91,7 @@ export function CartPage() {
     setOrdering(true)
     setError('')
     try {
+      // POST /orders → creates order, reserves stock for 15 min. / POST /orders → создаёт заказ, резервирует товар на 15 мин.
       const order = await api.createOrder()
       toast('Заказ оформлен — у вас 15 минут на оплату')
       navigate(`/orders/${order.orderId}`)

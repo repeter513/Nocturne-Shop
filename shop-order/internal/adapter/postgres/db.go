@@ -1,3 +1,5 @@
+// Package postgres provides PostgreSQL connectivity for the order service.
+// Пакет postgres обеспечивает подключение к PostgreSQL для сервиса заказов.
 package postgres
 
 import (
@@ -9,10 +11,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// DB wraps a pgx connection pool.
+// DB оборачивает пул соединений pgx.
 type DB struct {
+	// pool is the underlying pgxpool.Pool managing PostgreSQL connections.
+	// pool — базовый pgxpool.Pool, управляющий соединениями с PostgreSQL.
 	pool *pgxpool.Pool
 }
 
+// New opens a PostgreSQL pool from the given DSN.
+// New открывает пул PostgreSQL по переданному DSN.
 func New(ctx context.Context, dsn string) (*DB, error) {
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -37,20 +45,28 @@ func New(ctx context.Context, dsn string) (*DB, error) {
 	return &DB{pool: pool}, nil
 }
 
+// Close shuts down the connection pool.
+// Close закрывает пул соединений.
 func (db *DB) Close() {
 	if db.pool != nil {
 		db.pool.Close()
 	}
 }
 
+// Pool returns the underlying pgx pool for direct queries.
+// Pool возвращает базовый пул pgx для прямых запросов.
 func (db *DB) Pool() *pgxpool.Pool {
 	return db.pool
 }
 
+// Ping checks database connectivity.
+// Ping проверяет доступность базы данных.
 func (db *DB) Ping(ctx context.Context) error {
 	return db.pool.Ping(ctx)
 }
 
+// WithTx runs fn inside a transaction, rolling back on error.
+// WithTx выполняет fn внутри транзакции, откатывая при ошибке.
 func (db *DB) WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	tx, err := db.pool.Begin(ctx)
 	if err != nil {

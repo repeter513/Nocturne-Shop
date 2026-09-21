@@ -2,20 +2,20 @@
 
 gRPC-сервис заказов: оформление из корзины, резерв стока, оплата / отмена.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-Контракт: [shop-proto `order.v1.OrderService`](../shop-proto/proto/order/v1/order.proto)
+Контракт: [shop-proto `order.v1.OrderService`](../shop-proto/proto/order/v1/order.proto) (модуль `v0.2.6`)
 
 Локальный стек: [shop-infra](../shop-infra/README.md) (gRPC порт `8084`, env: [`env/order.env.example`](../shop-infra/env/order.env.example))
 
-Все RPC требуют metadata `authorization: Bearer <access_token>` (`JWT_SECRET` тот же, что в [shop-auth](../shop-auth/README.md)). `user_id` берётся из JWT.
+Все RPC требуют metadata `authorization: Bearer <access_token>`. `user_id` берётся из JWT.
 
 ## Зависимости
 
 | Сервис | Зачем |
 |--------|--------|
 | [shop-cart](../shop-cart/README.md) | `GetCart`, `ClearCart` |
-| [shop-catalog](../shop-catalog/README.md) | `ReserveStock`, `ConfirmReservation`, `ReleaseStock` |
+| [shop-catalog](../shop-catolog/README.md) | `ReserveStock`, `ConfirmReservation`, `ReleaseStock` |
 | [shop-payment](../shop-payment/README.md) | `CreatePayment` |
 
 ## Checkout flow
@@ -35,10 +35,10 @@ CancelOrder (только pending, свой заказ):
 
 ## Стек
 
-- Go 1.26
+- Go 1.26.3
 - gRPC + protobuf ([shop-proto](../shop-proto/README.md))
 - PostgreSQL (`pgx`)
-- JWT (`golang-jwt`)
+- JWT Ed25519 ([shop-proto `pkg/auth`](../shop-proto/README.md#auth-pkgauth))
 
 ## Быстрый старт
 
@@ -46,7 +46,8 @@ CancelOrder (только pending, свой заказ):
 
 - Go 1.26+
 - PostgreSQL (`order_db`)
-- Запущенные [cart](../shop-cart/README.md) (`8083`), [catalog](../shop-catalog/README.md) (`8082`), [payment](../shop-payment/README.md) (`8086`)
+- Ed25519 `public.pem`
+- Запущенные [cart](../shop-cart/README.md) (`8083`), [catalog](../shop-catolog/README.md) (`8082`), [payment](../shop-payment/README.md) (`8086`)
 
 ### Конфигурация
 
@@ -62,7 +63,7 @@ cp .env.example .env
 | `CART_GRPC_ADDR` | да | Адрес cart |
 | `CATALOG_GRPC_ADDR` | да | Адрес catalog |
 | `PAYMENT_GRPC_ADDR` | да | Адрес payment |
-| `JWT_SECRET` | да | base64 secret, тот же что в [shop-auth](../shop-auth/README.md) |
+| `JWT_PUBLIC_KEY_PATH` | да | PEM Ed25519 public key |
 
 ### Миграции и запуск
 
@@ -92,11 +93,8 @@ grpcurl -plaintext -H 'authorization: Bearer TOKEN' \
 
 ## Docker
 
-Через [shop-infra](../shop-infra/README.md):
-
 ```bash
-cd ../shop-infra
-make up
+cd ../shop-infra && make up
 ```
 
 ## Make-команды

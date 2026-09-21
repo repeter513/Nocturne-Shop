@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
-	github.com/repeter513/shop-proto v0.1.8
+	github.com/repeter513/shop-proto v0.2.6
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.11
 )

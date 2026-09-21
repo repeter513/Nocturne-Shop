@@ -4,7 +4,7 @@
 // 	protoc        v7.34.1
 // source: cart/v1/cart.proto
 
-package cart1
+package cartv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -26,7 +26,7 @@ type CartItem struct {
 	ProductId     int64                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
 	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Price         float64                `protobuf:"fixed64,4,opt,name=price,proto3" json:"price,omitempty"`
+	Price         int64                  `protobuf:"varint,4,opt,name=price,proto3" json:"price,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -82,7 +82,7 @@ func (x *CartItem) GetName() string {
 	return ""
 }
 
-func (x *CartItem) GetPrice() float64 {
+func (x *CartItem) GetPrice() int64 {
 	if x != nil {
 		return x.Price
 	}
@@ -93,7 +93,7 @@ type Cart struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Items         []*CartItem            `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
-	TotalPrice    float64                `protobuf:"fixed64,3,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
+	TotalPrice    int64                  `protobuf:"varint,3,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -142,7 +142,7 @@ func (x *Cart) GetItems() []*CartItem {
 	return nil
 }
 
-func (x *Cart) GetTotalPrice() float64 {
+func (x *Cart) GetTotalPrice() int64 {
 	if x != nil {
 		return x.TotalPrice
 	}
@@ -151,7 +151,6 @@ func (x *Cart) GetTotalPrice() float64 {
 
 type GetCartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -184,13 +183,6 @@ func (x *GetCartRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetCartRequest.ProtoReflect.Descriptor instead.
 func (*GetCartRequest) Descriptor() ([]byte, []int) {
 	return file_cart_v1_cart_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *GetCartRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 type GetCartResponse struct {
@@ -239,7 +231,6 @@ func (x *GetCartResponse) GetCart() *Cart {
 
 type AddToCartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	ProductId     int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
 	Quantity      int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -274,13 +265,6 @@ func (x *AddToCartRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AddToCartRequest.ProtoReflect.Descriptor instead.
 func (*AddToCartRequest) Descriptor() ([]byte, []int) {
 	return file_cart_v1_cart_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *AddToCartRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 func (x *AddToCartRequest) GetProductId() int64 {
@@ -343,7 +327,6 @@ func (x *AddToCartResponse) GetCart() *Cart {
 
 type UpdateCartItemRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	ProductId     int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
 	Quantity      int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -378,13 +361,6 @@ func (x *UpdateCartItemRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UpdateCartItemRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCartItemRequest) Descriptor() ([]byte, []int) {
 	return file_cart_v1_cart_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *UpdateCartItemRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 func (x *UpdateCartItemRequest) GetProductId() int64 {
@@ -447,7 +423,6 @@ func (x *UpdateCartItemResponse) GetCart() *Cart {
 
 type RemoveFromCartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	ProductId     int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -481,13 +456,6 @@ func (x *RemoveFromCartRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RemoveFromCartRequest.ProtoReflect.Descriptor instead.
 func (*RemoveFromCartRequest) Descriptor() ([]byte, []int) {
 	return file_cart_v1_cart_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *RemoveFromCartRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 func (x *RemoveFromCartRequest) GetProductId() int64 {
@@ -543,7 +511,6 @@ func (x *RemoveFromCartResponse) GetCart() *Cart {
 
 type ClearCartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -576,13 +543,6 @@ func (x *ClearCartRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ClearCartRequest.ProtoReflect.Descriptor instead.
 func (*ClearCartRequest) Descriptor() ([]byte, []int) {
 	return file_cart_v1_cart_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *ClearCartRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 type ClearCartResponse struct {
@@ -631,45 +591,40 @@ const file_cart_v1_cart_proto_rawDesc = "" +
 	"product_id\x18\x01 \x01(\x03R\tproductId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x14\n" +
-	"\x05price\x18\x04 \x01(\x01R\x05price\"i\n" +
+	"\x05price\x18\x04 \x01(\x03R\x05price\"i\n" +
 	"\x04Cart\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12'\n" +
 	"\x05items\x18\x02 \x03(\v2\x11.cart.v1.CartItemR\x05items\x12\x1f\n" +
-	"\vtotal_price\x18\x03 \x01(\x01R\n" +
-	"totalPrice\")\n" +
-	"\x0eGetCartRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"4\n" +
+	"\vtotal_price\x18\x03 \x01(\x03R\n" +
+	"totalPrice\"\x1f\n" +
+	"\x0eGetCartRequestJ\x04\b\x01\x10\x02R\auser_id\"4\n" +
 	"\x0fGetCartResponse\x12!\n" +
-	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"f\n" +
-	"\x10AddToCartRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
+	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"\\\n" +
+	"\x10AddToCartRequest\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x02 \x01(\x03R\tproductId\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\x05R\bquantity\"6\n" +
+	"\bquantity\x18\x03 \x01(\x05R\bquantityJ\x04\b\x01\x10\x02R\auser_id\"6\n" +
 	"\x11AddToCartResponse\x12!\n" +
-	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"k\n" +
-	"\x15UpdateCartItemRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
+	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"a\n" +
+	"\x15UpdateCartItemRequest\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x02 \x01(\x03R\tproductId\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\x05R\bquantity\";\n" +
+	"\bquantity\x18\x03 \x01(\x05R\bquantityJ\x04\b\x01\x10\x02R\auser_id\";\n" +
 	"\x16UpdateCartItemResponse\x12!\n" +
-	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"O\n" +
-	"\x15RemoveFromCartRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
+	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"E\n" +
+	"\x15RemoveFromCartRequest\x12\x1d\n" +
 	"\n" +
-	"product_id\x18\x02 \x01(\x03R\tproductId\";\n" +
+	"product_id\x18\x02 \x01(\x03R\tproductIdJ\x04\b\x01\x10\x02R\auser_id\";\n" +
 	"\x16RemoveFromCartResponse\x12!\n" +
-	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"+\n" +
-	"\x10ClearCartRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\x13\n" +
+	"\x04cart\x18\x01 \x01(\v2\r.cart.v1.CartR\x04cart\"!\n" +
+	"\x10ClearCartRequestJ\x04\b\x01\x10\x02R\auser_id\"\x13\n" +
 	"\x11ClearCartResponse2\xf9\x02\n" +
 	"\vCartService\x12B\n" +
 	"\tAddToCart\x12\x19.cart.v1.AddToCartRequest\x1a\x1a.cart.v1.AddToCartResponse\x12Q\n" +
 	"\x0eUpdateCartItem\x12\x1e.cart.v1.UpdateCartItemRequest\x1a\x1f.cart.v1.UpdateCartItemResponse\x12Q\n" +
 	"\x0eRemoveFromCart\x12\x1e.cart.v1.RemoveFromCartRequest\x1a\x1f.cart.v1.RemoveFromCartResponse\x12<\n" +
 	"\aGetCart\x12\x17.cart.v1.GetCartRequest\x1a\x18.cart.v1.GetCartResponse\x12B\n" +
-	"\tClearCart\x12\x19.cart.v1.ClearCartRequest\x1a\x1a.cart.v1.ClearCartResponseB7Z5github.com/repeter513/shop-proto/gen/go/cart/v1;cart1b\x06proto3"
+	"\tClearCart\x12\x19.cart.v1.ClearCartRequest\x1a\x1a.cart.v1.ClearCartResponseB8Z6github.com/repeter513/shop-proto/gen/go/cart/v1;cartv1b\x06proto3"
 
 var (
 	file_cart_v1_cart_proto_rawDescOnce sync.Once

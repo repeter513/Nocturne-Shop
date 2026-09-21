@@ -4,7 +4,7 @@
 // 	protoc        v7.34.1
 // source: payment/v1/payment.proto
 
-package payment1
+package paymentv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -79,7 +79,7 @@ type Payment struct {
 	PaymentId     int64                  `protobuf:"varint,1,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
 	OrderId       int64                  `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Amount        float64                `protobuf:"fixed64,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	Amount        int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
 	Status        PaymentStatus          `protobuf:"varint,5,opt,name=status,proto3,enum=payment.v1.PaymentStatus" json:"status,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -137,7 +137,7 @@ func (x *Payment) GetUserId() int64 {
 	return 0
 }
 
-func (x *Payment) GetAmount() float64 {
+func (x *Payment) GetAmount() int64 {
 	if x != nil {
 		return x.Amount
 	}
@@ -159,13 +159,10 @@ func (x *Payment) GetCreatedAt() *timestamppb.Timestamp {
 }
 
 type CreatePaymentRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	OrderId         int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	UserId          int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Amount          float64                `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	SimulateFailure bool                   `protobuf:"varint,4,opt,name=simulate_failure,json=simulateFailure,proto3" json:"simulate_failure,omitempty"` // For testing purposes, to simulate a failed payment
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderId       int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreatePaymentRequest) Reset() {
@@ -205,33 +202,13 @@ func (x *CreatePaymentRequest) GetOrderId() int64 {
 	return 0
 }
 
-func (x *CreatePaymentRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-func (x *CreatePaymentRequest) GetAmount() float64 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
-func (x *CreatePaymentRequest) GetSimulateFailure() bool {
-	if x != nil {
-		return x.SimulateFailure
-	}
-	return false
-}
-
 type CreatePaymentResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PaymentId     int64                  `protobuf:"varint,1,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
-	Status        PaymentStatus          `protobuf:"varint,2,opt,name=status,proto3,enum=payment.v1.PaymentStatus" json:"status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PaymentId      int64                  `protobuf:"varint,1,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
+	Status         PaymentStatus          `protobuf:"varint,2,opt,name=status,proto3,enum=payment.v1.PaymentStatus" json:"status,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *CreatePaymentResponse) Reset() {
@@ -276,6 +253,13 @@ func (x *CreatePaymentResponse) GetStatus() PaymentStatus {
 		return x.Status
 	}
 	return PaymentStatus_PAYMENT_STATUS_UNSPECIFIED
+}
+
+func (x *CreatePaymentResponse) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
 }
 
 type GetPaymentRequest struct {
@@ -368,7 +352,6 @@ func (x *GetPaymentResponse) GetPayment() *Payment {
 
 type ListPaymentsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	OrderId       int64                  `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
@@ -404,13 +387,6 @@ func (x *ListPaymentsRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListPaymentsRequest.ProtoReflect.Descriptor instead.
 func (*ListPaymentsRequest) Descriptor() ([]byte, []int) {
 	return file_payment_v1_payment_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ListPaymentsRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 func (x *ListPaymentsRequest) GetOrderId() int64 {
@@ -497,29 +473,26 @@ const file_payment_v1_payment_proto_rawDesc = "" +
 	"payment_id\x18\x01 \x01(\x03R\tpaymentId\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\x03R\x06userId\x12\x16\n" +
-	"\x06amount\x18\x04 \x01(\x01R\x06amount\x121\n" +
+	"\x06amount\x18\x04 \x01(\x03R\x06amount\x121\n" +
 	"\x06status\x18\x05 \x01(\x0e2\x19.payment.v1.PaymentStatusR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x8d\x01\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"f\n" +
 	"\x14CreatePaymentRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\x03R\aorderId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x16\n" +
-	"\x06amount\x18\x03 \x01(\x01R\x06amount\x12)\n" +
-	"\x10simulate_failure\x18\x04 \x01(\bR\x0fsimulateFailure\"i\n" +
+	"\border_id\x18\x01 \x01(\x03R\aorderIdJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x04\x10\x05R\auser_idR\x06amountR\x10simulate_failure\"\x92\x01\n" +
 	"\x15CreatePaymentResponse\x12\x1d\n" +
 	"\n" +
 	"payment_id\x18\x01 \x01(\x03R\tpaymentId\x121\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x19.payment.v1.PaymentStatusR\x06status\"2\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x19.payment.v1.PaymentStatusR\x06status\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"2\n" +
 	"\x11GetPaymentRequest\x12\x1d\n" +
 	"\n" +
 	"payment_id\x18\x01 \x01(\x03R\tpaymentId\"C\n" +
 	"\x12GetPaymentResponse\x12-\n" +
-	"\apayment\x18\x01 \x01(\v2\x13.payment.v1.PaymentR\apayment\"z\n" +
-	"\x13ListPaymentsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x19\n" +
+	"\apayment\x18\x01 \x01(\v2\x13.payment.v1.PaymentR\apayment\"p\n" +
+	"\x13ListPaymentsRequest\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"h\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSizeJ\x04\b\x01\x10\x02R\auser_id\"h\n" +
 	"\x14ListPaymentsResponse\x12/\n" +
 	"\bpayments\x18\x01 \x03(\v2\x13.payment.v1.PaymentR\bpayments\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x05R\n" +
@@ -533,7 +506,7 @@ const file_payment_v1_payment_proto_rawDesc = "" +
 	"\rCreatePayment\x12 .payment.v1.CreatePaymentRequest\x1a!.payment.v1.CreatePaymentResponse\x12K\n" +
 	"\n" +
 	"GetPayment\x12\x1d.payment.v1.GetPaymentRequest\x1a\x1e.payment.v1.GetPaymentResponse\x12Q\n" +
-	"\fListPayments\x12\x1f.payment.v1.ListPaymentsRequest\x1a .payment.v1.ListPaymentsResponseB=Z;github.com/repeter513/shop-proto/gen/go/payment/v1;payment1b\x06proto3"
+	"\fListPayments\x12\x1f.payment.v1.ListPaymentsRequest\x1a .payment.v1.ListPaymentsResponseB>Z<github.com/repeter513/shop-proto/gen/go/payment/v1;paymentv1b\x06proto3"
 
 var (
 	file_payment_v1_payment_proto_rawDescOnce sync.Once

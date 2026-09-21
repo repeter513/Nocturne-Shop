@@ -499,7 +499,6 @@ func (x *RefreshTokenResponse) GetExpiresIn() int64 {
 
 type GetUserInfoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -532,13 +531,6 @@ func (x *GetUserInfoRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetUserInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetUserInfoRequest) Descriptor() ([]byte, []int) {
 	return file_auth_v1_auth_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *GetUserInfoRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
 }
 
 type GetUserInfoResponse struct {
@@ -619,9 +611,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x1d\n" +
 	"\n" +
-	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"-\n" +
-	"\x12GetUserInfoRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"8\n" +
+	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"#\n" +
+	"\x12GetUserInfoRequestJ\x04\b\x01\x10\x02R\auser_id\"8\n" +
 	"\x13GetUserInfoResponse\x12!\n" +
 	"\x04user\x18\x01 \x01(\v2\r.auth.v1.UserR\x04user2\x85\x03\n" +
 	"\vAuthService\x12K\n" +

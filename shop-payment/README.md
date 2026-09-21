@@ -2,25 +2,28 @@
 
 gRPC-сервис платежей: создание и просмотр платежей по заказам.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-Контракт: [shop-proto `payment.v1.PaymentService`](../shop-proto/proto/payment/v1/payment.proto)
+Контракт: [shop-proto `payment.v1.PaymentService`](../shop-proto/proto/payment/v1/payment.proto) (модуль `v0.2.6`)
 
 Вызывается из [shop-order](../shop-order/README.md) в `PayOrder` (`CreatePayment`).  
 Локальный стек: [shop-infra](../shop-infra/README.md) (gRPC порт `8086`, env: [`env/payment.env.example`](../shop-infra/env/payment.env.example))
 
 ## Возможности
 
-- Создать платёж по `order_id`, `user_id`, `amount`
+- Создать платёж по `order_id` (сумма и `user_id` — из [shop-order](../shop-order/README.md))
 - Идемпотентность: один платёж на `order_id` (`UNIQUE` в БД)
-- Получить платёж по ID, список с фильтрами
-- Флаг `simulate_failure` в proto для тестов отказов
+- Получить платёж по ID, список с фильтром по `order_id`
+- MVP: `CreatePayment` всегда возвращает `SUCCESS`
+
+Все RPC требуют metadata `authorization: Bearer <access_token>`. `user_id` для `ListPayments` — из JWT.
 
 ## Стек
 
-- Go 1.26
+- Go 1.26.3
 - gRPC + protobuf ([shop-proto](../shop-proto/README.md))
 - PostgreSQL (`pgx`)
+- gRPC-клиент к order
 
 ## Быстрый старт
 
@@ -28,7 +31,8 @@ gRPC-сервис платежей: создание и просмотр пла�
 
 - Go 1.26+
 - PostgreSQL (`payment_db`)
-- `psql` для миграций
+- Ed25519 `public.pem`
+- Запущенный [shop-order](../shop-order/README.md) на `8084`
 
 ### Конфигурация
 
@@ -41,11 +45,13 @@ cp .env.example .env
 | `GRPC_PORT` | да | Порт gRPC (`8086`) |
 | `DATABASE_URL` | да | DSN PostgreSQL (`payment_db`) |
 | `LOG_LEVEL` | нет | По умолчанию `info` |
+| `JWT_PUBLIC_KEY_PATH` | да | PEM Ed25519 public key |
+| `ORDER_GRPC_ADDR` | да | Адрес order-сервиса |
 
 ### Миграции и запуск
 
 ```bash
-make migrate-up   # 00001 schema + 00002 unique(order_id)
+make migrate-up
 make run
 ```
 
@@ -53,29 +59,20 @@ make run
 
 | RPC | Описание |
 |---|---|
-| `CreatePayment` | Создать платёж (статус `success` или `failed`) |
+| `CreatePayment` | Создать платёж по `order_id` |
 | `GetPayment` | Платёж по ID |
-| `ListPayments` | Список с фильтрами `user_id`, `order_id` |
+| `ListPayments` | Список платежей пользователя (фильтр `order_id`) |
 
 ```bash
-grpcurl -plaintext -d '{"order_id":1,"user_id":1,"amount":99.97}' \
+grpcurl -plaintext -H 'authorization: Bearer TOKEN' \
+  -d '{"order_id":1}' \
   localhost:8086 payment.v1.PaymentService/CreatePayment
 ```
 
 ## Docker
 
-Через [shop-infra](../shop-infra/README.md):
-
 ```bash
-cd ../shop-infra
-make up
-```
-
-Отдельно:
-
-```bash
-docker build -t shop-payment .
-docker run --env-file .env -p 8086:8086 shop-payment
+cd ../shop-infra && make up
 ```
 
 ## Make-команды

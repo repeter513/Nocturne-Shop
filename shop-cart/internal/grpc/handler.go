@@ -1,3 +1,5 @@
+// Package grpc implements the cart gRPC API handlers.
+// Пакет grpc реализует gRPC-обработчики API корзины.
 package grpc
 
 import (
@@ -12,19 +14,29 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Handler serves cart RPC methods.
+// Handler обслуживает RPC-методы корзины.
 type Handler struct {
 	cartv1.UnimplementedCartServiceServer
+	// svc contains cart business logic invoked by each RPC method.
+	// svc содержит бизнес-логику корзины, вызываемую каждым RPC-методом.
 	svc *service.CartService
 }
 
+// NewHandler creates a gRPC handler backed by the cart service.
+// NewHandler создаёт gRPC-обработчик на основе сервиса корзины.
 func NewHandler(svc *service.CartService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// GetCart returns the authenticated user's cart.
+// GetCart возвращает корзину аутентифицированного пользователя.
 func (h *Handler) GetCart(ctx context.Context, _ *cartv1.GetCartRequest) (*cartv1.GetCartResponse, error) {
+	// Auth: extract user_id from JWT placed in context by UnaryServerInterceptor.
+	// Аутентификация: извлечение user_id из JWT, помещённого в контекст UnaryServerInterceptor.
 	userID, err := userID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, err // codes.Unauthenticated — missing or invalid JWT
 	}
 	cart, err := h.svc.GetCart(ctx, userID)
 	if err != nil {
@@ -33,6 +45,8 @@ func (h *Handler) GetCart(ctx context.Context, _ *cartv1.GetCartRequest) (*cartv
 	return &cartv1.GetCartResponse{Cart: toProtoCart(cart)}, nil
 }
 
+// AddToCart adds a product to the authenticated user's cart.
+// AddToCart добавляет товар в корзину аутентифицированного пользователя.
 func (h *Handler) AddToCart(ctx context.Context, req *cartv1.AddToCartRequest) (*cartv1.AddToCartResponse, error) {
 	userID, err := userID(ctx)
 	if err != nil {
@@ -45,6 +59,8 @@ func (h *Handler) AddToCart(ctx context.Context, req *cartv1.AddToCartRequest) (
 	return &cartv1.AddToCartResponse{Cart: toProtoCart(cart)}, nil
 }
 
+// UpdateCartItem updates the quantity of a cart item.
+// UpdateCartItem обновляет количество позиции в корзине.
 func (h *Handler) UpdateCartItem(ctx context.Context, req *cartv1.UpdateCartItemRequest) (*cartv1.UpdateCartItemResponse, error) {
 	userID, err := userID(ctx)
 	if err != nil {
@@ -57,6 +73,8 @@ func (h *Handler) UpdateCartItem(ctx context.Context, req *cartv1.UpdateCartItem
 	return &cartv1.UpdateCartItemResponse{Cart: toProtoCart(cart)}, nil
 }
 
+// RemoveFromCart removes a product from the authenticated user's cart.
+// RemoveFromCart удаляет товар из корзины аутентифицированного пользователя.
 func (h *Handler) RemoveFromCart(ctx context.Context, req *cartv1.RemoveFromCartRequest) (*cartv1.RemoveFromCartResponse, error) {
 	userID, err := userID(ctx)
 	if err != nil {
@@ -69,6 +87,8 @@ func (h *Handler) RemoveFromCart(ctx context.Context, req *cartv1.RemoveFromCart
 	return &cartv1.RemoveFromCartResponse{Cart: toProtoCart(cart)}, nil
 }
 
+// ClearCart removes all items from the authenticated user's cart.
+// ClearCart удаляет все позиции из корзины аутентифицированного пользователя.
 func (h *Handler) ClearCart(ctx context.Context, _ *cartv1.ClearCartRequest) (*cartv1.ClearCartResponse, error) {
 	userID, err := userID(ctx)
 	if err != nil {
@@ -80,6 +100,16 @@ func (h *Handler) ClearCart(ctx context.Context, _ *cartv1.ClearCartRequest) (*c
 	return &cartv1.ClearCartResponse{}, nil
 }
 
+// userID extracts the authenticated user ID from the request context.
+// userID извлекает ID аутентифицированного пользователя из контекста запроса.
+//
+// The JWT interceptor (pkgauth.UnaryServerInterceptor) validates the token
+// and stores the user_id in context before this handler runs.
+// JWT-интерцептор (pkgauth.UnaryServerInterceptor) проверяет токен
+// и сохраняет user_id в контексте до вызова обработчика.
+//
+// Returns codes.Unauthenticated when the token is missing, expired, or invalid.
+// Возвращает codes.Unauthenticated, когда токен отсутствует, просрочен или невалиден.
 func userID(ctx context.Context) (int, error) {
 	id, err := pkgauth.UserIDFromContext(ctx)
 	if err != nil {
@@ -88,6 +118,8 @@ func userID(ctx context.Context) (int, error) {
 	return int(id), nil
 }
 
+// toProtoCart converts a domain cart to its protobuf representation.
+// toProtoCart преобразует доменную корзину в protobuf-представление.
 func toProtoCart(c *domain.Cart) *cartv1.Cart {
 	if c == nil {
 		return nil
@@ -103,6 +135,8 @@ func toProtoCart(c *domain.Cart) *cartv1.Cart {
 	}
 }
 
+// toProtoCartItem converts a domain cart item to protobuf.
+// toProtoCartItem преобразует доменную позицию корзины в protobuf.
 func toProtoCartItem(item *domain.CartItems) *cartv1.CartItem {
 	if item == nil {
 		return nil
@@ -114,6 +148,21 @@ func toProtoCartItem(item *domain.CartItems) *cartv1.CartItem {
 		Price:     item.Price,
 	}
 }
+
+// mapError translates domain errors into gRPC status codes.
+// mapError преобразует доменные ошибки в коды статуса gRPC.
+//
+// Status code mapping:
+// Сопоставление кодов статуса:
+//   - InvalidArgument  — bad input (missing IDs, invalid quantity)
+//   - NotFound         — cart item or product does not exist
+//   - FailedPrecondition — insufficient stock for requested quantity
+//   - Internal         — unexpected database or downstream errors
+//
+//   - InvalidArgument  — неверный ввод (отсутствующие ID, невалидное количество)
+//   - NotFound         — позиция корзины или товар не найдены
+//   - FailedPrecondition — недостаточный остаток для запрошенного количества
+//   - Internal         — неожиданные ошибки БД или downstream-сервисов
 func mapError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrIDRequired),

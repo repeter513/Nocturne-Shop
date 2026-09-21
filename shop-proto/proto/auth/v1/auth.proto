@@ -1,29 +1,49 @@
+// Authentication service — user registration, login, JWT lifecycle.
+// Сервис аутентификации — регистрация, вход, жизненный цикл JWT.
 syntax = "proto3";
 
 package auth.v1;
 
 option go_package = "github.com/repeter513/shop-proto/gen/go/auth/v1;authv1";
 
+// AuthService manages accounts and issues JWT access/refresh token pairs.
+// AuthService управляет аккаунтами и выдаёт пары JWT access/refresh токенов.
 service AuthService {
+  // RegisterUser creates a new account; returns assigned user_id.
+  // RegisterUser создаёт новый аккаунт; возвращает назначенный user_id.
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+
+  // LoginUser validates credentials and returns token pair + expires_in seconds.
+  // LoginUser проверяет учётные данные и возвращает пару токенов + expires_in в секундах.
   rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+
+  // ValidateToken checks token signature and expiry; used by BFF/gateway.
+  // ValidateToken проверяет подпись и срок токена; используется BFF/gateway.
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+
+  // RefreshToken exchanges a valid refresh token for a new token pair.
+  // RefreshToken обменивает действительный refresh-токен на новую пару.
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+  // GetUserInfo returns profile for the caller; user_id taken from JWT context.
+  // GetUserInfo возвращает профиль вызывающего; user_id берётся из JWT context.
   rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
 }
 
+// User is the public profile exposed to clients (no password hash).
+// User — публичный профиль для клиентов (без password hash).
 message User {
-  int64 id = 1;
-  string email = 2;
+  int64 id = 1;       // Primary key / Первичный ключ
+  string email = 2;   // Unique login email / Уникальный email для входа
 }
 
 message RegisterUserRequest {
-  string email = 1;
-  string password = 2;
+  string email = 1;     // New account email / Email нового аккаунта
+  string password = 2;  // Plain-text password (hashed server-side) / Пароль (хешируется на сервере)
 }
 
 message RegisterUserResponse {
-  int64 user_id = 1;
+  int64 user_id = 1;  // ID of the created user / ID созданного пользователя
 }
 
 message LoginUserRequest {
@@ -32,20 +52,20 @@ message LoginUserRequest {
 }
 
 message LoginUserResponse {
-  string access_token = 1;
-  string refresh_token = 2;
-  int64 expires_in = 3;
-  int64 user_id = 4;
+  string access_token = 1;   // Short-lived JWT for API calls / Короткоживущий JWT для API
+  string refresh_token = 2;  // Long-lived token for renewal / Долгоживущий токен для обновления
+  int64 expires_in = 3;      // Access token TTL in seconds / TTL access-токена в секундах
+  int64 user_id = 4;         // Authenticated user ID / ID аутентифицированного пользователя
 }
 
 message ValidateTokenRequest {
-  string token = 1;
+  string token = 1;  // Access token to validate / Access-токен для проверки
 }
 
 message ValidateTokenResponse {
-  bool is_valid = 1;
-  int64 user_id = 2;
-  repeated string roles = 3;
+  bool is_valid = 1;           // false on any validation error / false при любой ошибке проверки
+  int64 user_id = 2;           // Populated when valid / Заполняется при is_valid=true
+  repeated string roles = 3;   // RBAC roles from token / RBAC-роли из токена
 }
 
 message RefreshTokenRequest {
@@ -54,12 +74,15 @@ message RefreshTokenRequest {
 
 message RefreshTokenResponse {
   string access_token = 1;
-  string refresh_token = 2;
+  string refresh_token = 2;  // Rotated refresh token / Новый refresh-токен (rotation)
   int64 expires_in = 3;
 }
 
+// user_id removed: now extracted from JWT by server interceptor.
+// user_id удалён: теперь извлекается из JWT server interceptor.
 message GetUserInfoRequest {
-  int64 user_id = 1;
+  reserved 1;
+  reserved "user_id";
 }
 
 message GetUserInfoResponse {

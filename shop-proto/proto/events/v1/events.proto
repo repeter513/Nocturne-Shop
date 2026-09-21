@@ -1,34 +1,45 @@
+// Domain events and notification payloads for async messaging (future use).
+// Доменные события и payload уведомлений для асинхронной передачи (будущее использование).
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
 package events.v1;
 
-option go_package = "github.com/repeter513/shop-proto/gen/go/events/v1;events1";
+option go_package = "github.com/repeter513/shop-proto/gen/go/events/v1;eventsv1";
 
-
-enum ORDER_EVENT_TYPE {
+// OrderEventType classifies order lifecycle events for pub/sub consumers.
+// OrderEventType классифицирует события жизненного цикла заказа для pub/sub-потребителей.
+enum OrderEventType {
   ORDER_EVENT_TYPE_UNSPECIFIED = 0;
-  ORDER_EVENT_TYPE_PAID = 1;
-  ORDER_EVENT_TYPE_FAILED = 2;
+  ORDER_EVENT_TYPE_PAID = 1;    // Emitted after successful payment / После успешной оплаты
+  ORDER_EVENT_TYPE_FAILED = 2;  // Emitted after payment failure / После неудачной оплаты
 }
+
+// OrderEvent is published when an order reaches a terminal payment state.
+// OrderEvent публикуется, когда заказ достигает финального состояния оплаты.
 message OrderEvent {
-  ORDER_EVENT_TYPE type = 1;
+  OrderEventType type = 1;
   int64 order_id = 2;
   int64 user_id = 3;
-  double total_price = 4;
+  int64 total_price = 4;
   int64 payment_id = 5;
 }
+
 enum NotificationChannel {
   NOTIFICATION_CHANNEL_UNSPECIFIED = 0;
   NOTIFICATION_CHANNEL_EMAIL = 1;
 }
+
 enum NotificationStatus {
   NOTIFICATION_STATUS_UNSPECIFIED = 0;
   NOTIFICATION_STATUS_SENT = 1;
   NOTIFICATION_STATUS_FAILED = 2;
 }
-message Notification{
+
+// Notification represents a delivery attempt to the user.
+// Notification представляет попытку доставки уведомления пользователю.
+message Notification {
   int64 id = 1;
   int64 user_id = 2;
   NotificationChannel channel = 3;
@@ -37,4 +48,3 @@ message Notification{
   NotificationStatus status = 6;
   google.protobuf.Timestamp sent_at = 7;
 }
-

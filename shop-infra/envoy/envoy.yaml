@@ -1,11 +1,22 @@
+# EN: Envoy proxy configuration for the shop platform — HTTP gateway + gRPC router.
+# RU: Конфигурация Envoy proxy для платформы магазина — HTTP-шлюз + gRPC-маршрутизатор.
+
+# EN: Admin interface for stats, config dump, and health checks on port 9901.
+# RU: Админ-интерфейс для метрик, config dump и health checks на порту 9901.
 admin:
   address:
     socket_address:
+      # EN: Bind admin to all interfaces inside container.
+      # RU: Admin слушает на всех интерфейсах внутри контейнера.
       address: 0.0.0.0
+      # EN: Matches ENVOY_ADMIN_PORT host mapping (9901).
+      # RU: Соответствует маппингу ENVOY_ADMIN_PORT на хосте (9901).
       port_value: 9901
 
 static_resources:
   listeners:
+    # EN: HTTP listener on :8080 — browser traffic (SPA + REST API via BFF).
+    # RU: HTTP listener на :8080 — браузерный трафик (SPA + REST API через BFF).
     - name: http_listener
       address:
         socket_address:
@@ -16,18 +27,28 @@ static_resources:
             - name: envoy.filters.network.http_connection_manager
               typed_config:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                # EN: AUTO codec supports HTTP/1.1 and HTTP/2 on same listener.
+                # RU: AUTO codec поддерживает HTTP/1.1 и HTTP/2 на одном listener.
                 codec_type: AUTO
                 stat_prefix: http_gateway
                 route_config:
                   name: shop_http_routes
                   virtual_hosts:
                     - name: shop
+                      # EN: Catch-all domain — single-tenant local dev setup.
+                      # RU: Catch-all domain — локальная разработка single-tenant.
                       domains: ["*"]
                       routes:
+                        # EN: /health → BFF liveness probe (5s timeout).
+                        # RU: /health → liveness probe BFF (timeout 5s).
                         - match: { path: "/health" }
                           route: { cluster: bff, timeout: 5s }
+                        # EN: /api/* → BFF REST endpoints (JWT validated by BFF, 30s timeout).
+                        # RU: /api/* → REST endpoints BFF (JWT проверяет BFF, timeout 30s).
                         - match: { prefix: "/api/" }
                           route: { cluster: bff, timeout: 30s }
+                        # EN: /* fallback → web SPA static assets and client routing.
+                        # RU: /* fallback → статика SPA и client-side routing.
                         - match: { prefix: "/" }
                           route: { cluster: web, timeout: 30s }
                 http_filters:
@@ -35,6 +56,10 @@ static_resources:
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
+    # EN: gRPC listener on :443 — routes by Host header to backend microservices.
+    # RU: gRPC listener на :443 — маршрутизация по Host header на backend-микросервисы.
+    # EN: Clients set Host: catalog.local (or catalog) to reach catalog cluster.
+    # RU: Клиенты задают Host: catalog.local (или catalog) для доступа к catalog cluster.
     - name: grpc_listener
       address:
         socket_address:
@@ -50,26 +75,36 @@ static_resources:
                 route_config:
                   name: shop_grpc_routes
                   virtual_hosts:
+                    # EN: Catalog gRPC — product listing, stock, reservations (:8082 upstream).
+                    # RU: Catalog gRPC — каталог, остатки, резервы (:8082 upstream).
                     - name: catalog
                       domains: ["catalog", "catalog.local"]
                       routes:
                         - match: { prefix: "/" }
                           route: { cluster: catalog, timeout: 30s }
+                    # EN: Cart gRPC — cart CRUD (:8083 upstream).
+                    # RU: Cart gRPC — CRUD корзины (:8083 upstream).
                     - name: cart
                       domains: ["cart", "cart.local"]
                       routes:
                         - match: { prefix: "/" }
                           route: { cluster: cart, timeout: 30s }
+                    # EN: Auth gRPC — register, login, JWT validate/refresh (:8081 upstream).
+                    # RU: Auth gRPC — регистрация, вход, validate/refresh JWT (:8081 upstream).
                     - name: auth
                       domains: ["auth", "auth.local"]
                       routes:
                         - match: { prefix: "/" }
                           route: { cluster: auth, timeout: 30s }
+                    # EN: Order gRPC — checkout orchestration (:8084 upstream).
+                    # RU: Order gRPC — оркестрация оформления заказа (:8084 upstream).
                     - name: order
                       domains: ["order", "order.local"]
                       routes:
                         - match: { prefix: "/" }
                           route: { cluster: order, timeout: 30s }
+                    # EN: Payment gRPC — payment processing (:8086 upstream).
+                    # RU: Payment gRPC — обработка платежей (:8086 upstream).
                     - name: payment
                       domains: ["payment", "payment.local"]
                       routes:
@@ -81,6 +116,11 @@ static_resources:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
+    # EN: Upstream cluster definitions — Docker Compose DNS resolves service names.
+    # RU: Определения upstream-кластеров — Docker Compose DNS резолвит имена сервисов.
+
+    # EN: Web SPA cluster — HTTP/1.1, port 80 inside compose network.
+    # RU: Кластер web SPA — HTTP/1.1, порт 80 в compose-сети.
     - name: web
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
@@ -92,6 +132,8 @@ static_resources:
                   address:
                     socket_address: { address: web, port_value: 80 }
 
+    # EN: BFF cluster — REST aggregation layer, port 8080.
+    # RU: Кластер BFF — слой REST-агрегации, порт 8080.
     - name: bff
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
@@ -103,6 +145,11 @@ static_resources:
                   address:
                     socket_address: { address: bff, port_value: 8080 }
 
+    # EN: gRPC backends require HTTP/2 upstream (explicit_http_config.http2_protocol_options).
+    # RU: gRPC backend-ы требуют HTTP/2 upstream (explicit_http_config.http2_protocol_options).
+
+    # EN: Catalog upstream — gRPC :8082, JWT audience catalog.
+    # RU: Catalog upstream — gRPC :8082, JWT audience catalog.
     - name: catalog
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
@@ -119,6 +166,8 @@ static_resources:
                   address:
                     socket_address: { address: catalog, port_value: 8082 }
 
+    # EN: Cart upstream — gRPC :8083.
+    # RU: Cart upstream — gRPC :8083.
     - name: cart
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
@@ -135,6 +184,8 @@ static_resources:
                   address:
                     socket_address: { address: cart, port_value: 8083 }
 
+    # EN: Auth upstream — gRPC :8081 (JWT issuer).
+    # RU: Auth upstream — gRPC :8081 (выдача JWT).
     - name: auth
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
@@ -151,6 +202,8 @@ static_resources:
                   address:
                     socket_address: { address: auth, port_value: 8081 }
 
+    # EN: Order upstream — gRPC :8084.
+    # RU: Order upstream — gRPC :8084.
     - name: order
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
@@ -167,6 +220,8 @@ static_resources:
                   address:
                     socket_address: { address: order, port_value: 8084 }
 
+    # EN: Payment upstream — gRPC :8086.
+    # RU: Payment upstream — gRPC :8086.
     - name: payment
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN

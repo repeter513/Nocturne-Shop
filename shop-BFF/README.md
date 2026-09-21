@@ -2,7 +2,7 @@
 
 HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web/README.md) и gRPC-микросервисами.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](README.md) · [web](../shop-web/README.md)
 
 В compose **нет порта на хост** — HTTP API доступен через [Envoy](../shop-infra/envoy/envoy.yaml):
 
@@ -11,9 +11,9 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 
 ## Стек
 
-- Go 1.26
+- Go 1.26.3
 - HTTP (`net/http`)
-- gRPC-клиенты к auth, catalog, cart, order, payment ([shop-proto](../shop-proto/README.md))
+- gRPC-клиенты к auth, catalog, cart, order, payment ([shop-proto](../shop-proto/README.md) `v0.2.6`)
 
 ## Запуск локально (без Docker)
 
@@ -21,6 +21,8 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 cp .env.example .env
 go run ./cmd/server
 ```
+
+`.env.example` пустой — для compose используй [`shop-infra/env/bff.env`](../shop-infra/env/bff.env.example).
 
 Слушает `:8080` внутри контейнера (`HTTP_PORT`). С хоста — через Envoy `:8090`.
 
@@ -64,13 +66,22 @@ BFF доступен только внутри docker-сети; снаружи �
 
 | Переменная | Описание |
 |------------|----------|
-| `HTTP_PORT` | HTTP-порт внутри контейнера (default `8080`) |
-| `AUTH_GRPC_ADDR` | адрес shop-auth |
-| `CATALOG_GRPC_ADDR` | адрес shop-catalog |
-| `CART_GRPC_ADDR` | адрес shop-cart |
-| `ORDER_GRPC_ADDR` | адрес shop-order |
-| `PAYMENT_GRPC_ADDR` | адрес shop-payment |
+| `HTTP_PORT` | HTTP-порт (default `8080`) |
+| `AUTH_GRPC_ADDR` | адрес shop-auth (`auth:8081` в compose) |
+| `CATALOG_GRPC_ADDR` | адрес shop-catalog (`catalog:8082`) |
+| `CART_GRPC_ADDR` | адрес shop-cart (`cart:8083`) |
+| `ORDER_GRPC_ADDR` | адрес shop-order (`order:8084`) |
+| `PAYMENT_GRPC_ADDR` | адрес shop-payment (`payment:8086`) |
 | `LOG_LEVEL` | уровень логирования (default `info`) |
 | `CORS_ORIGINS` | allowed origin (default `*`) |
 
 Шаблон для compose: [`env/bff.env.example`](../shop-infra/env/bff.env.example)
+
+## Make-команды
+
+| Команда | Описание |
+|---------|----------|
+| `make run` | Запуск сервера |
+| `make build` | Сборка в `bin/server` |
+| `make test` | `go test ./...` |
+| `make fmt` / `make vet` / `make tidy` | Форматирование и проверки |

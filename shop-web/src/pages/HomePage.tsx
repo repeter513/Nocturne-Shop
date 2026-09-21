@@ -1,9 +1,11 @@
+// Catalog home page — product grid with search and category filters. / Главная страница каталога — сетка товаров с поиском и фильтрами категорий.
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
 import type { Category, Product } from '../api/types'
 import { ProductCard } from '../components/ProductCard'
 import { ProductGridSkeleton } from '../components/Skeleton'
 
+// HomePage lists products with pagination, search, and category filter. / HomePage показывает товары с пагинацией, поиском и фильтром по категории.
 export function HomePage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -17,16 +19,19 @@ export function HomePage() {
   const pageSize = 12
   const isSearching = search.trim().length > 0
 
+  // Load category filter buttons once on mount. / Загружаем кнопки фильтра категорий один раз при монтировании.
   useEffect(() => {
     api.listCategories()
       .then((r) => setCategories(r.categories ?? []))
       .catch(() => {})
   }, [])
 
+  // Re-fetch products when page, category, or search changes. / Перезагружаем товары при смене page, category или search.
   useEffect(() => {
     setLoading(true)
     setError('')
     const query = search.trim()
+    // Client-side search: fetch up to 100 items then filter locally. / Клиентский поиск: загружаем до 100 товаров и фильтруем локально.
     const fetchPage = query ? 1 : page
     const fetchSize = query ? 100 : pageSize
 
@@ -39,6 +44,7 @@ export function HomePage() {
       .finally(() => setLoading(false))
   }, [page, categoryId, search])
 
+  // Client-side name/description filter when search is active. / Клиентская фильтрация по названию/описанию при активном поиске.
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return products

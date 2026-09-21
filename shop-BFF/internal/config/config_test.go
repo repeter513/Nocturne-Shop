@@ -1,3 +1,5 @@
+// Package config_test tests configuration loading.
+// Пакет config_test тестирует загрузку конфигурации.
 package config_test
 
 import (
@@ -7,7 +9,11 @@ import (
 	"github.com/repeter513/shop-BFF/internal/config"
 )
 
+// TestLoadFromEnvFile verifies defaults loaded from the project .env file.
+// TestLoadFromEnvFile проверяет значения по умолчанию из .env проекта.
 func TestLoadFromEnvFile(t *testing.T) {
+	// Clear env so Load() falls back to .env file values.
+	// Очищаем env, чтобы Load() взял значения из .env файла.
 	for _, key := range []string{
 		"HTTP_PORT", "AUTH_GRPC_ADDR", "CATALOG_GRPC_ADDR",
 		"CART_GRPC_ADDR", "ORDER_GRPC_ADDR", "PAYMENT_GRPC_ADDR",

@@ -1,14 +1,18 @@
+// Product card for the catalog grid. / Карточка товара для сетки каталога.
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import type { Product } from '../api/types'
 import { getProductImage, getShortDescription } from '../data/productImages'
 
 interface Props {
+  // Product data from catalog API. / Данные товара из catalog API.
   product: Product
 }
 
+// ProductCard shows image, name, short description, and price. / ProductCard показывает изображение, название, краткое описание и цену.
 export function ProductCard({ product }: Props) {
   const image = getProductImage(product.id)
+  // imgError: fallback to placeholder when Unsplash URL fails. / imgError: запасной placeholder при ошибке URL Unsplash.
   const [imgError, setImgError] = useState(false)
 
   return (

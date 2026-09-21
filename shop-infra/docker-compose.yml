@@ -1,13 +1,35 @@
+# EN: Docker Compose stack for the shop microservices platform.
+# RU: Docker Compose стек для платформы микросервисов магазина.
+
+# EN: Shared JWT public key volume mount used by backend services (read-only at /run/jwt).
+# RU: Общий volume с публичным JWT-ключом для backend-сервисов (read-only в /run/jwt).
+# EN: Env JWT_KEYS_DIR points to host directory with public.pem (and private.pem for auth only).
+# RU: Env JWT_KEYS_DIR — директория на хосте с public.pem (и private.pem только для auth).
+x-jwt-volumes: &jwt-volumes
+  - ${JWT_KEYS_DIR}:/run/jwt:ro
+
 services:
+  # EN: PostgreSQL — single instance, separate logical DB per microservice (auth_db, catalog_db, …).
+  # RU: PostgreSQL — один инстанс, отдельная логическая БД на микросервис (auth_db, catalog_db, …).
   postgres:
     image: postgres:16-alpine
     environment:
+      # EN: Superuser name for init scripts and service connections.
+      # RU: Имя суперпользователя для init-скриптов и подключений сервисов.
       POSTGRES_USER: ${POSTGRES_USER:-shop}
+      # EN: Superuser password (default "shop" for local dev only).
+      # RU: Пароль суперпользователя (дефолт "shop" только для локальной разработки).
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop}
     volumes:
+      # EN: Persistent data directory survives container restarts.
+      # RU: Персистентные данные переживают перезапуск контейнера.
       - postgres_data:/var/lib/postgresql/data
+      # EN: Init SQL runs once on first startup (creates auth_db, catalog_db, …).
+      # RU: Init SQL выполняется один раз при первом запуске (создаёт auth_db, catalog_db, …).
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
     ports:
+      # EN: Host POSTGRES_PORT (default 5432) → container 5432 for local tools/migrations.
+      # RU: Хост POSTGRES_PORT (дефолт 5432) → контейнер 5432 для локальных инструментов/миграций.
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shop}"]
@@ -15,46 +37,66 @@ services:
       timeout: 5s
       retries: 5
 
+  # EN: Adminer — lightweight DB web UI for inspecting all service databases.
+  # RU: Adminer — лёгкий веб-UI для просмотра всех БД сервисов.
   adminer:
     image: adminer:4
     ports:
+      # EN: Host ADMINER_PORT (default 8089) → container 8080.
+      # RU: Хост ADMINER_PORT (дефолт 8089) → контейнер 8080.
       - "${ADMINER_PORT:-8089}:8080"
     depends_on:
       postgres:
         condition: service_healthy
 
+  # EN: Auth service — JWT issuer (private key) and user registration/login gRPC :8081.
+  # RU: Сервис auth — выдача JWT (приватный ключ) и gRPC регистрации/входа :8081.
   auth:
     build: ../shop-auth
     env_file:
+      # EN: Service-local .env (GRPC_PORT, DATABASE_URL, JWT key paths).
+      # RU: Локальный .env сервиса (GRPC_PORT, DATABASE_URL, пути JWT-ключей).
       - ../shop-auth/.env
+      # EN: Infra overrides (Docker network hostnames, shared JWT mount path).
+      # RU: Infra-переопределения (hostname в Docker-сети, общий путь JWT mount).
       - env/auth.env
+    volumes: *jwt-volumes
     depends_on:
       postgres:
         condition: service_healthy
 
+  # EN: Catalog service — products, categories, stock reservation gRPC :8082.
+  # RU: Сервис catalog — товары, категории, резервирование остатков gRPC :8082.
   catalog:
     build: ../shop-catalog
     env_file:
       - ../shop-catalog/.env
       - env/catalog.env
+    volumes: *jwt-volumes
     depends_on:
       postgres:
         condition: service_healthy
 
+  # EN: Cart service — shopping cart persistence gRPC :8083.
+  # RU: Сервис cart — хранение корзины gRPC :8083.
   cart:
     build: ../shop-cart
     env_file:
       - ../shop-cart/.env
       - env/cart.env
+    volumes: *jwt-volumes
     depends_on:
       postgres:
         condition: service_healthy
 
+  # EN: Order service — orchestrates checkout; needs cart, catalog, payment up first.
+  # RU: Сервис order — оформление заказа; требует cart, catalog, payment.
   order:
     build: ../shop-order
     env_file:
       - ../shop-order/.env
       - env/order.env
+    volumes: *jwt-volumes
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,15 +107,20 @@ services:
       payment:
         condition: service_started
 
+  # EN: Payment service — payment processing gRPC :8086.
+  # RU: Сервис payment — обработка платежей gRPC :8086.
   payment:
     build: ../shop-payment
     env_file:
       - ../shop-payment/.env
       - env/payment.env
+    volumes: *jwt-volumes
     depends_on:
       postgres:
         condition: service_healthy
 
+  # EN: BFF — REST gateway aggregating gRPC backends for the web client :8080.
+  # RU: BFF — REST-шлюз, агрегирующий gRPC backend-ы для веб-клиента :8080.
   bff:
     build: ../shop-BFF
     env_file:
@@ -86,18 +133,30 @@ services:
       - order
       - payment
 
+  # EN: Web SPA frontend served on container port 80.
+  # RU: Web SPA фронтенд на порту контейнера 80.
   web:
     build: ../shop-web
     depends_on:
       - bff
 
+  # EN: Envoy edge proxy — HTTP :8080 for browser, gRPC :443 routed by Host header, admin :9901.
+  # RU: Envoy edge proxy — HTTP :8080 для браузера, gRPC :443 по Host header, admin :9901.
   envoy:
     image: envoyproxy/envoy:v1.31-latest
     ports:
+      # EN: ENVOY_HTTP_PORT (default 8090) → listener 8080 (web + BFF routes).
+      # RU: ENVOY_HTTP_PORT (дефолт 8090) → listener 8080 (маршруты web + BFF).
       - "${ENVOY_HTTP_PORT:-8090}:8080"
+      # EN: ENVOY_GRPC_PORT (default 8443) → listener 443 (gRPC to microservices).
+      # RU: ENVOY_GRPC_PORT (дефолт 8443) → listener 443 (gRPC к микросервисам).
       - "${ENVOY_GRPC_PORT:-8443}:443"
+      # EN: ENVOY_ADMIN_PORT (default 9901) → Envoy admin/stats UI.
+      # RU: ENVOY_ADMIN_PORT (дефолт 9901) → admin/stats UI Envoy.
       - "${ENVOY_ADMIN_PORT:-9901}:9901"
     volumes:
+      # EN: Static routing config mounted read-only.
+      # RU: Статический конфиг маршрутизации, монтируется read-only.
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
     command: ["-c", "/etc/envoy/envoy.yaml"]
     depends_on:
@@ -110,4 +169,6 @@ services:
       - payment
 
 volumes:
+  # EN: Named volume for PostgreSQL data persistence across compose down/up.
+  # RU: Named volume для персистентности данных PostgreSQL при compose down/up.
   postgres_data:

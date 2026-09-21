@@ -2,12 +2,13 @@
 
 Фронт магазина **Nocturne**: каталог, корзина, заказы, оплата.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](README.md)
 
 В compose **нет порта на хост** — статика отдаётся через [Envoy](../shop-infra/envoy/envoy.yaml) на http://localhost:8090.
 
 ## Стек
 
+- Node 22 (Docker)
 - React 19 + TypeScript
 - Vite 6
 - react-router-dom 7
@@ -30,7 +31,7 @@
 ### Через compose
 
 ```bash
-cd ../shop-infra && make up
+cd ../shop-infra && make init && make up
 ```
 
 Открыть http://localhost:8090 — Envoy маршрутизирует `/` сюда, `/api/` → BFF.
