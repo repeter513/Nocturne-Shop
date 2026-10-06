@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
+# Прогон миграций всех backend-БД монорепо Nocturne (make migrate из shop-infra).
+# Требует psql на хосте и доступный Postgres (POSTGRES_* из shop-infra/.env или env).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# BASE — корень монорепо (родитель shop-infra)
 BASE="$(cd "$ROOT/.." && pwd)"
 
 PG_USER="${POSTGRES_USER:-shop}"

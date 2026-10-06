@@ -2,9 +2,9 @@
 
 gRPC-сервис корзины: добавление, изменение, удаление позиций и просмотр корзины пользователя.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto@v0.1.7/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-Контракт API: [shop-proto `cart.v1.CartService`](../shop-proto/proto/cart/v1/cart.proto) (модуль `v0.2.6`)
+Контракт API: [shop-proto `cart.v1.CartService`](../shop-proto@v0.1.7/proto/cart/v1/cart.proto) · сборка: `github.com/repeter513/shop-proto` **v0.2.7** (GitHub)
 
 Локальный стек: [shop-infra](../shop-infra/README.md) (gRPC порт `8083`)
 
@@ -17,14 +17,15 @@ gRPC-сервис корзины: добавление, изменение, уд
 - Удалить позицию (`RemoveFromCart`)
 - Получить корзину с name, price, total (`GetCart`)
 - Очистить корзину (`ClearCart`)
-- Проверка стока и обогащение ответа через [shop-catalog](../shop-catolog/README.md)
+- Проверка стока и обогащение ответа через [shop-catalog](../shop-catalog/README.md)
 
 ## Стек
 
 - Go 1.26.3
-- gRPC + protobuf ([shop-proto](../shop-proto/README.md))
+- gRPC + protobuf ([shop-proto](../shop-proto@v0.1.7/README.md))
 - PostgreSQL (`pgx`)
 - gRPC-клиент к catalog
+- Structured JSON logs (`log/slog`, `internal/logx`)
 
 ## Быстрый старт
 
@@ -33,7 +34,7 @@ gRPC-сервис корзины: добавление, изменение, уд
 - Go 1.26+
 - PostgreSQL (`cart_db`)
 - Ed25519 `public.pem` (тот же, что в [shop-auth](../shop-auth/README.md))
-- Запущенный [shop-catalog](../shop-catolog/README.md) на `8082`
+- Запущенный [shop-catalog](../shop-catalog/README.md) на `8082`
 
 ### Конфигурация
 

@@ -36,6 +36,14 @@ type Config struct {
 	// JWTPublicKey verifies Bearer tokens from BFF/order services (env: JWT_PUBLIC_KEY_PATH).
 	// JWTPublicKey проверяет Bearer-токены от BFF/order (env: JWT_PUBLIC_KEY_PATH).
 	JWTPublicKey ed25519.PublicKey
+	// DBMaxConns is pgx pool size per process (env: DB_MAX_CONNS; default 10).
+	// Plan cluster load as replicas × DB_MAX_CONNS vs Postgres max_connections.
+	// DBMaxConns — размер pgx-пула на процесс (env: DB_MAX_CONNS; дефолт 10).
+	// Суммарная нагрузка: число реплик × DB_MAX_CONNS относительно max_connections.
+	DBMaxConns int
+	// DBMinConns is warm connections kept in the pool (env: DB_MIN_CONNS; default 2).
+	// DBMinConns — число «тёплых» соединений в пуле (env: DB_MIN_CONNS; дефолт 2).
+	DBMinConns int
 }
 
 // Load reads configuration from .env and environment variables.
@@ -84,6 +92,21 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("CLEANUP_INTERVAL: %w", err)
 	}
 
+	dbMaxConns, err := optionalInt("DB_MAX_CONNS", 10)
+	if err != nil {
+		return nil, err
+	}
+	dbMinConns, err := optionalInt("DB_MIN_CONNS", 2)
+	if err != nil {
+		return nil, err
+	}
+	if dbMinConns > dbMaxConns {
+		return nil, errors.New("DB_MIN_CONNS must not exceed DB_MAX_CONNS")
+	}
+	if dbMaxConns < 1 {
+		return nil, errors.New("DB_MAX_CONNS must be at least 1")
+	}
+
 	return &Config{
 		GRPCPort:        int16(port),
 		DatabaseURL:     databaseURL,
@@ -91,6 +114,8 @@ func Load() (*Config, error) {
 		ReservationTTL:  ttl,
 		CleanupInterval: cleanup,
 		JWTPublicKey:    pub,
+		DBMaxConns:      dbMaxConns,
+		DBMinConns:      dbMinConns,
 	}, nil
 }
 
@@ -104,6 +129,20 @@ func (c *Config) GRPCAddr() string {
 // ReservationTTLSeconds возвращает TTL резерва по умолчанию в секундах для gRPC handler.
 func (c *Config) ReservationTTLSeconds() int32 {
 	return int32(c.ReservationTTL / time.Second)
+}
+
+// optionalInt reads an integer env var or returns def when unset.
+// optionalInt читает целочисленную env или def, если переменная не задана.
+func optionalInt(key string, def int) (int, error) {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return def, nil
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", key, err)
+	}
+	return v, nil
 }
 
 // requiredInt reads and parses a required integer environment variable.

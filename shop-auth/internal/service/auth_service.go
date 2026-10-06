@@ -7,11 +7,23 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/repeter513/shop-auth/internal/domain"
 	"github.com/repeter513/shop-auth/internal/repository"
+	"github.com/repeter513/shop-auth/internal/validation"
 	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var (
+	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+)
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}
 
 // AuthService orchestrates user auth and JWT operations.
 // AuthService координирует аутентификацию пользователей и операции с JWT.
@@ -50,6 +62,10 @@ func (s *AuthService) Register(
 	email,
 	password string,
 ) (int64, error) {
+	email, err := validation.Credentials(email, password)
+	if err != nil {
+		return 0, err
+	}
 	// bcrypt.DefaultCost (10) balances security and latency on login.
 	// bcrypt.DefaultCost (10) балансирует безопасность и задержку при входе.
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -61,6 +77,9 @@ func (s *AuthService) Register(
 		PasswordHash: string(hash),
 	}
 	if err := s.users.CreateUser(ctx, u); err != nil {
+		if isUniqueViolation(err) {
+			return 0, ErrEmailAlreadyExists
+		}
 		return 0, err
 	}
 	return u.ID, nil
@@ -70,8 +89,8 @@ func (s *AuthService) Register(
 // Login проверяет учётные данные и выдаёт access/refresh токены.
 // JWT flow: lookup user → bcrypt compare → IssueAccessToken (short TTL) → IssueRefreshToken (long TTL).
 // JWT flow: поиск user → bcrypt compare → IssueAccessToken (короткий TTL) → IssueRefreshToken (длинный TTL).
-// Error paths: ErrNoRows or wrong password both surface as "invalid credentials" at handler layer.
-// Пути ошибок: ErrNoRows или неверный пароль на уровне handler оба дают "invalid credentials".
+// Error paths: unknown email (ErrNoRows) and wrong password both return ErrInvalidCredentials.
+// Пути ошибок: неизвестный email (ErrNoRows) и неверный пароль возвращают ErrInvalidCredentials.
 func (s *AuthService) Login(
 	ctx context.Context,
 	email,
@@ -83,12 +102,19 @@ func (s *AuthService) Login(
 	userID int64,
 	err error,
 ) {
-	u, err := s.users.GetUserByEmail(ctx, email)
+	email, err = validation.Credentials(email, password)
 	if err != nil {
 		return "", "", 0, 0, err
 	}
+	u, err := s.users.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", "", 0, 0, ErrInvalidCredentials
+		}
+		return "", "", 0, 0, err
+	}
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
-		return "", "", 0, 0, errors.New("invalid credentials")
+		return "", "", 0, 0, ErrInvalidCredentials
 	}
 	// Access token: no roles on first login (nil roles slice).
 	// Access token: без ролей при первом входе (nil roles slice).

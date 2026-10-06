@@ -7,6 +7,7 @@ import (
 
 	"github.com/repeter513/shop-BFF/internal/client"
 	authv1 "github.com/repeter513/shop-proto/gen/go/auth/v1"
+	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
 	cartv1 "github.com/repeter513/shop-proto/gen/go/cart/v1"
 	catalogv1 "github.com/repeter513/shop-proto/gen/go/catalog/v1"
 	orderv1 "github.com/repeter513/shop-proto/gen/go/order/v1"
@@ -16,15 +17,16 @@ import (
 // Handler proxies REST requests to backend gRPC services.
 // Handler проксирует REST-запросы в backend gRPC-сервисы.
 type Handler struct {
-	// clients holds typed gRPC stubs for auth, catalog, cart, order, payment.
-	// clients содержит типизированные gRPC-стабы auth, catalog, cart, order, payment.
-	clients *client.Clients
+	clients       *client.Clients
+	jwt           *pkgauth.Verifier
+	authRL        *IPRateLimit
+	authRefreshRL *IPRateLimit
 }
 
-// NewHandler constructs a Handler with the given gRPC clients.
-// NewHandler создаёт Handler с переданными gRPC-клиентами.
-func NewHandler(clients *client.Clients) *Handler {
-	return &Handler{clients: clients}
+// NewHandler wires gRPC clients, local JWT verifier, and per-route auth rate limiters.
+// NewHandler подключает gRPC-клиенты, локальный JWT verifier и rate limit для auth-маршрутов.
+func NewHandler(clients *client.Clients, jwt *pkgauth.Verifier, authRL, authRefreshRL *IPRateLimit) *Handler {
+	return &Handler{clients: clients, jwt: jwt, authRL: authRL, authRefreshRL: authRefreshRL}
 }
 
 // Register mounts all BFF routes on the given mux.
@@ -37,13 +39,9 @@ func (h *Handler) Register(mux *http.ServeMux, corsOrigins string) {
 	})
 
 	// --- Auth (auth gRPC: AuthService) ---
-	// POST /api/v1/auth/register → AuthService.RegisterUser
-	mux.Handle("POST /api/v1/auth/register", cors(corsOrigins)(http.HandlerFunc(h.register)))
-	// POST /api/v1/auth/login → AuthService.LoginUser
-	mux.Handle("POST /api/v1/auth/login", cors(corsOrigins)(http.HandlerFunc(h.login)))
-	// POST /api/v1/auth/refresh → AuthService.RefreshToken
-	mux.Handle("POST /api/v1/auth/refresh", cors(corsOrigins)(http.HandlerFunc(h.refresh)))
-	// GET /api/v1/auth/me → ValidateToken + GetUserInfo (requireAuth)
+	mux.Handle("POST /api/v1/auth/register", cors(corsOrigins)(h.authRL.Middleware(http.HandlerFunc(h.register))))
+	mux.Handle("POST /api/v1/auth/login", cors(corsOrigins)(h.authRL.Middleware(http.HandlerFunc(h.login))))
+	mux.Handle("POST /api/v1/auth/refresh", cors(corsOrigins)(h.authRefreshRL.Middleware(http.HandlerFunc(h.refresh))))
 	mux.Handle("GET /api/v1/auth/me", cors(corsOrigins)(requireAuth(http.HandlerFunc(h.me))))
 
 	// --- Catalog (catalog gRPC: CatalogService) — public, no JWT ---
@@ -162,8 +160,8 @@ type refreshReq struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-// refresh exchanges a refresh token for new access credentials.
-// refresh обменивает refresh-токен на новые учётные данные доступа.
+// refresh proxies AuthService.RefreshToken (stateless JWT — shop-auth does not revoke the prior refresh).
+// refresh проксирует AuthService.RefreshToken (stateless JWT — shop-auth не отзывает прежний refresh).
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	var body refreshReq
 	if err := decodeJSON(r, &body); err != nil {
@@ -190,17 +188,10 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 	auth := r.Header.Get("Authorization")
 	token, _ := stringsCutBearer(auth)
-	// gRPC: AuthService.ValidateToken — full JWT signature/expiry check
-	valid, err := h.clients.Auth.ValidateToken(r.Context(), &authv1.ValidateTokenRequest{Token: token})
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	if !valid.GetIsValid() {
+	if _, err := h.jwt.ParseAccess(token); err != nil {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid token"})
 		return
 	}
-	// gRPC: AuthService.GetUserInfo — requires auth metadata
 	resp, err := h.clients.Auth.GetUserInfo(withAuth(r.Context(), auth), &authv1.GetUserInfoRequest{})
 	if err != nil {
 		writeError(w, err)

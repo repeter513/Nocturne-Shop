@@ -2,11 +2,11 @@
 
 gRPC-сервис каталога магазина: товары, категории, остатки и резервирование стока под заказ.
 
-> Папка репозитория: `shop-catolog`. Go-модуль и docker-сервис: `shop-catalog` / `catalog`.
+> Монорепо: каталог `shop-catalog`. Go-модуль: `github.com/repeter513/shop-catalog`, сервис в compose: `catalog`.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto@v0.1.7/README.md) · [auth](../shop-auth/README.md) · [catalog](README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-Контракт API: [shop-proto `catalog.v1.CatalogService`](../shop-proto/proto/catalog/v1/catalog.proto) (модуль `v0.2.6`)
+Контракт API: [shop-proto `catalog.v1.CatalogService`](../shop-proto@v0.1.7/proto/catalog/v1/catalog.proto) · сборка: `github.com/repeter513/shop-proto` **v0.2.7** (GitHub)
 
 Используется [shop-cart](../shop-cart/README.md) (цены, сток) и [shop-order](../shop-order/README.md) (`CreateOrder` → резерв, `PayOrder` → confirm, `CancelOrder` → release).
 
@@ -21,8 +21,9 @@ gRPC-сервис каталога магазина: товары, катего�
 ## Стек
 
 - Go 1.26.3
-- gRPC + protobuf ([shop-proto](../shop-proto/README.md))
-- PostgreSQL (`pgx`)
+- gRPC + protobuf ([shop-proto](../shop-proto@v0.1.7/README.md))
+- PostgreSQL (`pgx`, настраиваемый пул `DB_MAX_CONNS` / `DB_MIN_CONNS`)
+- Structured JSON logs (`log/slog`, `internal/logx`)
 
 ## Быстрый старт
 
@@ -42,6 +43,8 @@ make run
 | `DATABASE_URL` | да | — | DSN PostgreSQL (`catalog_db`) |
 | `JWT_PUBLIC_KEY_PATH` | да | — | PEM Ed25519 public key |
 | `LOG_LEVEL` | нет | `info` | Уровень логирования |
+| `DB_MAX_CONNS` | нет | `10` | Размер pgx-пула на процесс |
+| `DB_MIN_CONNS` | нет | `2` | «Тёплые» соединения в пуле |
 | `RESERVATION_TTL` | нет | `5m` | TTL резерва (в compose: `15m`) |
 | `CLEANUP_INTERVAL` | нет | `1m` | Интервал очистки просроченных резервов |
 
@@ -61,8 +64,8 @@ make run
 | `ListCategories` | Все категории |
 | `GetStock` | Доступный остаток |
 | `ReserveStock` | Зарезервировать товар под `order_id` |
-| `ReleaseStock` | Снять резерв |
-| `ConfirmReservation` | Подтвердить — списать сток |
+| `ReleaseStock` | Снять резерв (`reservation_id` или `order_id`) |
+| `ConfirmReservation` | Подтвердить — списать сток (`reservation_id` или `order_id`) |
 
 ```bash
 grpcurl -plaintext localhost:8082 catalog.v1.CatalogService/ListProducts

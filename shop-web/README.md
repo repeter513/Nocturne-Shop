@@ -2,7 +2,9 @@
 
 Фронт магазина **Nocturne**: каталог, корзина, заказы, оплата.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto@v0.1.7/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](README.md)
+
+Backend зависит от gRPC-контрактов через BFF; Go-модуль **shop-proto** backend-ы тянут с GitHub (**v0.2.7**), см. [корневой README](../README.md).
 
 В compose **нет порта на хост** — статика отдаётся через [Envoy](../shop-infra/envoy/envoy.yaml) на http://localhost:8090.
 
@@ -13,6 +15,8 @@
 - Vite 6
 - react-router-dom 7
 - nginx (только статика в Docker)
+
+Статика бренда: `public/logo.png`, `public/favicon.png` (шапка, login/register, `index.html`).
 
 ## Страницы
 

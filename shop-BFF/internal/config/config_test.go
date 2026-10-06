@@ -17,10 +17,11 @@ func TestLoadFromEnvFile(t *testing.T) {
 	for _, key := range []string{
 		"HTTP_PORT", "AUTH_GRPC_ADDR", "CATALOG_GRPC_ADDR",
 		"CART_GRPC_ADDR", "ORDER_GRPC_ADDR", "PAYMENT_GRPC_ADDR",
-		"LOG_LEVEL", "CORS_ORIGINS",
+		"LOG_LEVEL", "CORS_ORIGINS", "JWT_PUBLIC_KEY_PATH", "AUTH_RATE_LIMIT_PER_MIN", "AUTH_REFRESH_RATE_LIMIT_PER_MIN",
 	} {
 		os.Unsetenv(key)
 	}
+	t.Setenv("JWT_PUBLIC_KEY_PATH", os.Getenv("HOME")+"/.shop-keys/public.pem")
 
 	cfg, err := config.Load()
 	if err != nil {

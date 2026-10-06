@@ -1,3 +1,4 @@
+# shop-order: зависимость shop-proto с GitHub (go.mod).
 FROM golang:1.26-alpine AS build
 RUN apk add --no-cache git
 WORKDIR /app

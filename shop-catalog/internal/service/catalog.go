@@ -71,10 +71,10 @@ func (s *CatalogService) ListCategories(ctx context.Context, parentID *int64) ([
 	return s.productRepo.ListCategories(ctx, parentID)
 }
 
-// GetStock returns physical stock minus active reservations per product.
-// GetStock возвращает физический остаток минус активные резервы по каждому товару.
-// Available = physical stock - sum(active reservation quantities for product).
-// Доступно = физический остаток - сумма(active reservation quantities для товара).
+// GetStock returns physical stock minus holding reservations per product.
+// GetStock возвращает физический остаток минус удерживающие резервы по каждому товару.
+// Available = physical - sum(items) for active and partially_released, non-expired reservations.
+// Доступно = физический - sum(items) по active и partially_released непросроченным резервам.
 func (s *CatalogService) GetStock(ctx context.Context, productIDs []int64) (map[int64]int32, error) {
 	if len(productIDs) == 0 {
 		return map[int64]int32{}, nil
@@ -109,6 +109,13 @@ func (s *CatalogService) GetStock(ctx context.Context, productIDs []int64) (map[
 // GetAvailableStock returns available quantity for a single product.
 // GetAvailableStock возвращает доступное количество для одного товара.
 func (s *CatalogService) GetAvailableStock(ctx context.Context, productID int64) (int32, error) {
+	product, err := s.productRepo.FindByID(ctx, productID)
+	if err != nil {
+		return 0, err
+	}
+	if product == nil {
+		return 0, domain.ErrProductNotFound
+	}
 	stock, err := s.GetStock(ctx, []int64{productID})
 	if err != nil {
 		return 0, err
@@ -146,8 +153,18 @@ func (s *CatalogService) ReleaseStock(
 	items map[int64]int32,
 	orderID int64,
 ) error {
+	if reservationID == 0 && len(items) == 0 && orderID != 0 {
+		reservation, err := s.reservationRepo.FindByOrderID(ctx, orderID)
+		if err != nil {
+			return err
+		}
+		if reservation == nil {
+			return domain.ErrReservationNotFound
+		}
+		return s.releaseByReservationID(ctx, reservation.ID)
+	}
 	if reservationID == 0 && len(items) == 0 {
-		return fmt.Errorf("either reservation_id or items must be provided")
+		return fmt.Errorf("either reservation_id or order_id or items must be provided")
 	}
 	if reservationID != 0 {
 		return s.releaseByReservationID(ctx, reservationID)

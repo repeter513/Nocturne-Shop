@@ -1,3 +1,4 @@
+// shop-auth — gRPC регистрация/логин/JWT. shop-proto: GitHub module (см. require), не локальная папка.
 module github.com/repeter513/shop-auth
 
 go 1.26.3
@@ -5,7 +6,7 @@ go 1.26.3
 require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
-	github.com/repeter513/shop-proto v0.2.6
+	github.com/repeter513/shop-proto v0.2.7
 	golang.org/x/crypto v0.55.0
 	google.golang.org/grpc v1.83.2
 )

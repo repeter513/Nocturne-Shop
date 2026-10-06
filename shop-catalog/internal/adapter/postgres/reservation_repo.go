@@ -42,21 +42,21 @@ func (r *ReservationRepo) FindByOrderID(ctx context.Context, orderID int64) (*do
 	return r.scanOne(ctx, r.db.Pool(), `SELECT id, order_id, items, status, expires_at, created_at FROM stock_reservations WHERE order_id = $1`, orderID)
 }
 
-// ExpireOverdue marks active reservations past expires_at as expired.
-// ExpireOverdue помечает активные резервы с истёкшим expires_at как expired.
-// Idempotent: re-running only affects rows still active and overdue.
-// Идемпотентно: повторный запуск затрагивает только ещё active и просроченные строки.
+// ExpireOverdue marks holding reservations past expires_at as expired.
+// ExpireOverdue помечает удерживающие резервы с истёкшим expires_at как expired.
+// Idempotent: re-running only affects rows still holding stock and overdue.
+// Идемпотентно: повторный запуск затрагивает только ещё удерживающие и просроченные строки.
 func (r *ReservationRepo) ExpireOverdue(ctx context.Context) error {
 	_, err := r.db.Pool().Exec(ctx, `
 		UPDATE stock_reservations SET status = $1
-		WHERE status = $2 AND expires_at <= NOW()`,
-		domain.ReservationExpired, domain.ReservationActive,
+		WHERE status IN ($2, $3) AND expires_at <= NOW()`,
+		domain.ReservationExpired, domain.ReservationActive, domain.ReservationPartiallyReleased,
 	)
 	return err
 }
 
-// GetActiveReservations returns non-expired active reservations containing a product.
-// GetActiveReservations возвращает непросроченные активные резервы с указанным товаром.
+// GetActiveReservations returns non-expired reservations that still hold stock for a product.
+// GetActiveReservations возвращает непросроченные резервы, ещё удерживающие остаток по товару.
 // Uses JSONB ? operator with string product_id key; GIN index idx_reservations_items supports this.
 // Использует JSONB ? с ключом product_id; GIN-индекс idx_reservations_items поддерживает это.
 func (r *ReservationRepo) GetActiveReservations(ctx context.Context, productID int64) ([]*domain.StockReservation, error) {
@@ -64,8 +64,8 @@ func (r *ReservationRepo) GetActiveReservations(ctx context.Context, productID i
 	rows, err := r.db.Pool().Query(ctx, `
 		SELECT id, order_id, items, status, expires_at, created_at
 		FROM stock_reservations
-		WHERE status = $1 AND expires_at > NOW() AND items ? $2`,
-		domain.ReservationActive, key,
+		WHERE status IN ($1, $2) AND expires_at > NOW() AND items ? $3`,
+		domain.ReservationActive, domain.ReservationPartiallyReleased, key,
 	)
 	if err != nil {
 		return nil, err
@@ -85,16 +85,16 @@ func (r *ReservationRepo) GetActiveReservations(ctx context.Context, productID i
 
 // sumActiveReservedTx totals reserved quantity for a product within a transaction.
 // sumActiveReservedTx суммирует зарезервированное количество товара внутри транзакции.
-// Used during reserve merge to compute available = physical - sum(other active reservations).
-// Используется при merge резерва: available = physical - sum(другие active резервы).
+// Counts active and partially_released rows (statuses that hold stock until confirm or full release).
+// Учитывает active и partially_released (удерживают остаток до confirm или полного release).
 func (r *ReservationRepo) sumActiveReservedTx(ctx context.Context, tx pgx.Tx, productID int64) (int32, error) {
 	key := strconv.FormatInt(productID, 10)
 	var sum int32
 	err := tx.QueryRow(ctx, `
 		SELECT COALESCE(SUM((items->>$1)::int), 0)::int
 		FROM stock_reservations
-		WHERE status = $2 AND expires_at > NOW() AND items ? $1`,
-		key, domain.ReservationActive,
+		WHERE status IN ($2, $3) AND expires_at > NOW() AND items ? $1`,
+		key, domain.ReservationActive, domain.ReservationPartiallyReleased,
 	).Scan(&sum)
 	return sum, err
 }

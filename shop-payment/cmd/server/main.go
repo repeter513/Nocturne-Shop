@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	"github.com/repeter513/shop-payment/internal/adapter/postgres"
 	"github.com/repeter513/shop-payment/internal/config"
 	paygrpc "github.com/repeter513/shop-payment/internal/grpc"
+	"github.com/repeter513/shop-payment/internal/logx"
 	"github.com/repeter513/shop-payment/internal/service"
 	paymentv1 "github.com/repeter513/shop-proto/gen/go/payment/v1"
 	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
@@ -30,6 +32,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger := logx.New(cfg.LogLevel)
+	slog.SetDefault(logger)
 
 	ctx := context.Background()
 
@@ -37,7 +41,8 @@ func main() {
 	// Шаг 2: подключение к PostgreSQL для хранения платежей.
 	db, err := postgres.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("db connect", slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -45,7 +50,8 @@ func main() {
 	// Шаг 3: подключение к сервису заказов для получения суммы заказа при оплате.
 	orderClient, err := order.New(ctx, cfg.OrderGRPCAddr())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("order dial", slog.String("addr", cfg.OrderGRPCAddr()), slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer orderClient.Close()
 
@@ -57,7 +63,8 @@ func main() {
 
 	lis, err := net.Listen("tcp", cfg.GRPCAddr())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("listen", slog.String("addr", cfg.GRPCAddr()), slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	// Step 5: register JWT auth interceptor with payment-specific audience.
@@ -68,9 +75,9 @@ func main() {
 	reflection.Register(srv)
 
 	go func() {
-		log.Println("gRPC listen", cfg.GRPCAddr())
+		logger.Info("gRPC listen", slog.String("addr", cfg.GRPCAddr()))
 		if err := srv.Serve(lis); err != nil {
-			log.Fatal(err)
+			logger.Error("gRPC serve", slog.Any("err", err))
 		}
 	}()
 

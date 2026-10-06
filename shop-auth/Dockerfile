@@ -1,3 +1,4 @@
+# shop-auth: go mod download тянет github.com/repeter513/shop-proto (см. go.mod).
 FROM golang:1.26-alpine AS build
 RUN apk add --no-cache git
 WORKDIR /app

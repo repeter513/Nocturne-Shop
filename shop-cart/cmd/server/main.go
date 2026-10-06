@@ -4,8 +4,8 @@ package main
 
 import (
 	"context"
-	"google.golang.org/grpc/reflection"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -15,10 +15,12 @@ import (
 	"github.com/repeter513/shop-cart/internal/adapter/postgres"
 	"github.com/repeter513/shop-cart/internal/config"
 	cartgrpc "github.com/repeter513/shop-cart/internal/grpc"
+	"github.com/repeter513/shop-cart/internal/logx"
 	"github.com/repeter513/shop-cart/internal/service"
 	cartv1 "github.com/repeter513/shop-proto/gen/go/cart/v1"
 	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // main wires dependencies and runs the gRPC server until shutdown.
@@ -30,6 +32,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger := logx.New(cfg.LogLevel)
+	slog.SetDefault(logger)
 
 	ctx := context.Background()
 
@@ -37,7 +41,8 @@ func main() {
 	// Шаг 2: подключение к PostgreSQL для хранения корзины.
 	db, err := postgres.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("db connect", slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -45,7 +50,8 @@ func main() {
 	// Шаг 3: подключение к сервису каталога для обогащения товаров и проверки остатков.
 	catalogClient, err := catalog.New(ctx, cfg.CatalogGRPCAddr())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("catalog dial", slog.String("addr", cfg.CatalogGRPCAddr()), slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer catalogClient.Close()
 
@@ -57,7 +63,8 @@ func main() {
 
 	lis, err := net.Listen("tcp", cfg.GRPCAddr())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("listen", slog.String("addr", cfg.GRPCAddr()), slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	// Step 5: register JWT auth interceptor with cart-specific audience.
@@ -67,9 +74,9 @@ func main() {
 	cartv1.RegisterCartServiceServer(srv, handler)
 	reflection.Register(srv)
 	go func() {
-		log.Println("gRPC listen", cfg.GRPCAddr())
+		logger.Info("gRPC listen", slog.String("addr", cfg.GRPCAddr()))
 		if err := srv.Serve(lis); err != nil {
-			log.Fatal(err)
+			logger.Error("gRPC serve", slog.Any("err", err))
 		}
 	}()
 

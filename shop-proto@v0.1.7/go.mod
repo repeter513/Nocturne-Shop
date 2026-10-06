@@ -1,3 +1,4 @@
+// Модуль shop-proto (публикуется на GitHub). Каталог shop-proto@v0.1.7 — копия для монорепо.
 module github.com/repeter513/shop-proto
 
 go 1.26.3

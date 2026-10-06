@@ -94,6 +94,20 @@ func (h *Handler) ListPayments(ctx context.Context, req *paymentv1.ListPaymentsR
 	}, nil
 }
 
+// VoidPayment marks a successful payment as failed for the given order (checkout rollback).
+// VoidPayment помечает успешный платёж по order_id как failed (откат checkout).
+func (h *Handler) VoidPayment(ctx context.Context, req *paymentv1.VoidPaymentRequest) (*paymentv1.VoidPaymentResponse, error) {
+	userID, err := userID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	p, err := h.svc.Void(ctx, req.GetOrderId(), userID)
+	if err != nil {
+		return nil, mapError(err)
+	}
+	return &paymentv1.VoidPaymentResponse{Payment: toProtoPayment(p)}, nil
+}
+
 // userID extracts the authenticated user ID from the request context.
 // userID извлекает ID аутентифицированного пользователя из контекста запроса.
 //

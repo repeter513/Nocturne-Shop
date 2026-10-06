@@ -3,12 +3,14 @@
 package config
 
 import (
+	"crypto/ed25519"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/joho/godotenv"
+	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
 )
 
 // Config holds runtime configuration for the BFF gateway.
@@ -45,6 +47,15 @@ type Config struct {
 	// CORSOrigins is the Access-Control-Allow-Origin value (default "*").
 	// CORSOrigins — значение заголовка Access-Control-Allow-Origin (по умолчанию "*").
 	CORSOrigins string
+
+	// JWTPublicKey verifies access tokens at the HTTP edge (env: JWT_PUBLIC_KEY_PATH).
+	JWTPublicKey ed25519.PublicKey
+
+	// AuthRateLimitPerMin caps register/login requests per client IP per minute (default 30).
+	AuthRateLimitPerMin int
+
+	// AuthRefreshRateLimitPerMin caps refresh requests per client IP per minute (default 10).
+	AuthRefreshRateLimitPerMin int
 }
 
 // Load reads and validates configuration from .env and environment.
@@ -80,6 +91,30 @@ func Load() (*Config, error) {
 		cfg.CORSOrigins = "*"
 	}
 
+	pub, err := loadPublicKey(os.Getenv("JWT_PUBLIC_KEY_PATH"))
+	if err != nil {
+		return nil, err
+	}
+	cfg.JWTPublicKey = pub
+
+	cfg.AuthRateLimitPerMin = 30
+	if raw := os.Getenv("AUTH_RATE_LIMIT_PER_MIN"); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil {
+			return nil, fmt.Errorf("AUTH_RATE_LIMIT_PER_MIN: %w", err)
+		}
+		cfg.AuthRateLimitPerMin = v
+	}
+
+	cfg.AuthRefreshRateLimitPerMin = 10
+	if raw := os.Getenv("AUTH_REFRESH_RATE_LIMIT_PER_MIN"); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil {
+			return nil, fmt.Errorf("AUTH_REFRESH_RATE_LIMIT_PER_MIN: %w", err)
+		}
+		cfg.AuthRefreshRateLimitPerMin = v
+	}
+
 	// Every gRPC backend address is mandatory — BFF cannot start without them.
 	// Адрес каждого gRPC-backend обязателен — BFF не стартует без них.
 	for _, pair := range []struct {
@@ -108,6 +143,17 @@ func (c *Config) HTTPAddr() string {
 
 // loadDotEnv searches upward from cwd for a .env file and loads it.
 // loadDotEnv ищет .env вверх от текущей директории и загружает его.
+func loadPublicKey(path string) (ed25519.PublicKey, error) {
+	if path == "" {
+		return nil, fmt.Errorf("JWT_PUBLIC_KEY_PATH environment variable not set")
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("JWT_PUBLIC_KEY_PATH: %w", err)
+	}
+	return pkgauth.LoadPublicKeyPEM(b)
+}
+
 func loadDotEnv() error {
 	dir, err := os.Getwd()
 	if err != nil {

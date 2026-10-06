@@ -1,4 +1,4 @@
 .idea
 *.pem
 .shop-keys/
-.DS_Store
+**/.DS_Store

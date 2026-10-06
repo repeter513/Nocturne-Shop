@@ -1,24 +1,29 @@
-# shop-proto
+# shop-proto@v0.1.7
+
+> **Монорепо Nocturne:** это **имя каталога** со снимком контрактов для чтения рядом с сервисами.  
+> **Сборка сервисов** использует Go-модуль с GitHub: `github.com/repeter513/shop-proto` (сейчас **v0.2.7** в `go.mod`), без `replace`.
 
 Общий репозиторий protobuf-контрактов для микросервисного интернет-магазина. Содержит gRPC-сервисы, сообщения и события, из которых генерируется Go-код для использования в сервисах.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
 **Модуль:** `github.com/repeter513/shop-proto`  
-**Go:** 1.26.3 · **Тег для сервисов:** `v0.2.6`
+**Go:** 1.26.3 · **Тег для сервисов:** `v0.2.7`
 
 Реализации сервисов:
 
 | Proto | Репозиторий |
 |-------|-------------|
 | `auth.v1` | [shop-auth](../shop-auth/README.md) |
-| `catalog.v1` | [shop-catalog](../shop-catolog/README.md) (`shop-catolog`) |
+| `catalog.v1` | [shop-catalog](../shop-catalog/README.md) |
 | `cart.v1` | [shop-cart](../shop-cart/README.md) |
 | `order.v1` | [shop-order](../shop-order/README.md) |
 | `payment.v1` | [shop-payment](../shop-payment/README.md) |
 | `events.v1` | асинхронные события (планируется) |
 
 Локальный стек: [shop-infra](../shop-infra/README.md)
+
+Суммы в proto (`price`, `total_price`, `amount`) — **int64 в минорных единицах** (копейки).
 
 ## Структура
 
@@ -51,7 +56,7 @@ go.mod
 | `RefreshToken` | Обновление access-токена |
 | `GetUserInfo` | Получение данных пользователя по ID |
 
-### Catalog (`catalog.v1.CatalogService`) — [shop-catalog](../shop-catolog/README.md)
+### Catalog (`catalog.v1.CatalogService`) — [shop-catalog](../shop-catalog/README.md)
 
 Контракт: [`proto/catalog/v1/catalog.proto`](proto/catalog/v1/catalog.proto)
 
@@ -62,8 +67,8 @@ go.mod
 | `ListCategories` | — | Список категорий |
 | `GetStock` | — | Доступный остаток |
 | `ReserveStock` | JWT | Резервирование товара под заказ |
-| `ReleaseStock` | JWT | Снятие резерва |
-| `ConfirmReservation` | JWT | Подтверждение резерва — списание стока |
+| `ReleaseStock` | JWT | Снятие резерва (`reservation_id` или `order_id`) |
+| `ConfirmReservation` | JWT | Подтверждение резерва — списание стока (`reservation_id` или `order_id`) |
 
 ### Cart (`cart.v1.CartService`) — [shop-cart](../shop-cart/README.md)
 
@@ -100,6 +105,7 @@ go.mod
 | `CreatePayment` | Создать платёж по заказу |
 | `GetPayment` | Платёж по ID |
 | `ListPayments` | Список платежей (`user_id` из JWT, фильтр `order_id`) |
+| `VoidPayment` | Отменить успешный платёж по `order_id` (SUCCESS → FAILED) |
 
 Статусы платежа: `PENDING`, `SUCCESS`, `FAILED`.
 
@@ -159,26 +165,30 @@ import (
 )
 ```
 
+**Подключение в сервисах (GitHub):**
+
 ```bash
-go get github.com/repeter513/shop-proto@v0.2.6
+go get github.com/repeter513/shop-proto@v0.2.7
 ```
 
-Сгенерированный код (`gen/go/`) коммитится в репозиторий, чтобы потребители могли импортировать модуль без локального запуска `protoc`.
+В монорепо [Nocturne](../README.md): корневой [`go.work`](../go.work) объединяет backend-модули; proto скачивается proxy/cache при `go build`.
+
+Сгенерированный код (`gen/go/`) коммитится в репозиторий shop-proto на GitHub, чтобы потребители импортировали модуль без локального `protoc`.
 
 ## Auth (`pkg/auth`)
 
 JWT подписывается **Ed25519 (EdDSA)**. Приватный ключ только в [shop-auth](../shop-auth/README.md); остальные сервисы держат публичный ключ и только проверяют токены.
 
-### Генерация ключей
+### Генерация ключей (вне репозитория)
 
 ```bash
-mkdir -p .shop-keys
-openssl genpkey -algorithm ED25519 -out .shop-keys/private.pem
-openssl pkey -in .shop-keys/private.pem -pubout -out .shop-keys/public.pem
-chmod 600 .shop-keys/private.pem
+mkdir -p ~/.shop-keys
+openssl genpkey -algorithm ED25519 -out ~/.shop-keys/private.pem
+openssl pkey -in ~/.shop-keys/private.pem -pubout -out ~/.shop-keys/public.pem
+chmod 600 ~/.shop-keys/private.pem
 ```
 
-Из корня монорепо. Ключи не коммитятся (`.shop-keys/` в `.gitignore`).
+Ключи не коммитятся (`*.pem` в `.gitignore`).
 
 Access-токен содержит `iss`, `aud` (список сервисов), refresh — `jti` + `aud: shop-auth`. Отзыв refresh по `jti` — **планируется** (пока только криптографическая проверка).
 

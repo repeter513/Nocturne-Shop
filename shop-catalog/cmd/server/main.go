@@ -4,8 +4,8 @@ package main
 
 import (
 	"context"
-	"google.golang.org/grpc/reflection"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -15,10 +15,12 @@ import (
 	"github.com/repeter513/shop-catalog/internal/adapter/postgres"
 	"github.com/repeter513/shop-catalog/internal/config"
 	cataloggrpc "github.com/repeter513/shop-catalog/internal/grpc"
+	"github.com/repeter513/shop-catalog/internal/logx"
 	"github.com/repeter513/shop-catalog/internal/service"
 	catalogv1 "github.com/repeter513/shop-proto/gen/go/catalog/v1"
 	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // main loads config, starts gRPC server, and handles graceful shutdown.
@@ -28,15 +30,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger := logx.New(cfg.LogLevel)
+	slog.SetDefault(logger)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Step 1: connect to catalog_db with tuned pool settings (see postgres.New).
 	// Шаг 1: подключение к catalog_db с настроенным пулом (см. postgres.New).
-	db, err := postgres.New(ctx, cfg.DatabaseURL)
+	db, err := postgres.New(ctx, cfg.DatabaseURL, int32(cfg.DBMaxConns), int32(cfg.DBMinConns))
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("db connect", slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -54,7 +59,8 @@ func main() {
 	handler := cataloggrpc.NewHandler(catalogSvc, cfg.ReservationTTLSeconds())
 	lis, err := net.Listen("tcp", cfg.GRPCAddr())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("listen", slog.String("addr", cfg.GRPCAddr()), slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	// Step 4: JWT verifier with catalog audience; PublicCatalog lists unauthenticated RPCs (if any).
@@ -64,9 +70,9 @@ func main() {
 	catalogv1.RegisterCatalogServiceServer(srv, handler)
 	reflection.Register(srv)
 	go func() {
-		log.Println("gRPC listen", cfg.GRPCAddr())
+		logger.Info("gRPC listen", slog.String("addr", cfg.GRPCAddr()))
 		if err := srv.Serve(lis); err != nil {
-			log.Fatal(err)
+			logger.Error("gRPC serve", slog.Any("err", err))
 		}
 	}()
 
@@ -80,8 +86,8 @@ func main() {
 
 // runReservationCleanup periodically marks expired stock reservations.
 // runReservationCleanup периодически помечает просроченные резервы остатков.
-// Idempotent: ExpireOverdue only updates rows where status=active AND expires_at <= NOW().
-// Идемпотентно: ExpireOverdue обновляет только строки status=active AND expires_at <= NOW().
+// Idempotent: ExpireOverdue only updates holding statuses with expires_at <= NOW().
+// Идемпотентно: ExpireOverdue обновляет только удерживающие статусы с expires_at <= NOW().
 func runReservationCleanup(ctx context.Context, svc *service.CatalogService, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -91,7 +97,7 @@ func runReservationCleanup(ctx context.Context, svc *service.CatalogService, int
 			return
 		case <-ticker.C:
 			if err := svc.CleanupExpiredReservations(ctx); err != nil {
-				log.Println("cleanup expired reservations:", err)
+				slog.Error("cleanup expired reservations", slog.Any("err", err))
 			}
 		}
 	}

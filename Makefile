@@ -1,3 +1,4 @@
+# Nocturne — корневой Makefile: проксирует команды в shop-infra (Docker Compose стек).
 .PHONY: init up down infra-up migrate logs seed
 
 init:

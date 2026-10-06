@@ -2,7 +2,7 @@
 
 HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web/README.md) и gRPC-микросервисами.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto@v0.1.7/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](README.md) · [web](../shop-web/README.md)
 
 В compose **нет порта на хост** — HTTP API доступен через [Envoy](../shop-infra/envoy/envoy.yaml):
 
@@ -13,7 +13,10 @@ HTTP-прослойка (Backend for Frontend) между [shop-web](../shop-web
 
 - Go 1.26.3
 - HTTP (`net/http`)
-- gRPC-клиенты к auth, catalog, cart, order, payment ([shop-proto](../shop-proto/README.md) `v0.2.6`)
+- gRPC-клиенты к auth, catalog, cart, order, payment — модуль [shop-proto](https://github.com/repeter513/shop-proto) **v0.2.7** (GitHub); `.proto` в [../shop-proto@v0.1.7](../shop-proto@v0.1.7/README.md)
+- Structured JSON logs (`log/slog`, `internal/logx`)
+- JWT access проверяется локально по `public.pem` (без `ValidateToken` RPC)
+- Rate limit по IP: register/login (`AUTH_RATE_LIMIT_PER_MIN`), отдельно refresh (`AUTH_REFRESH_RATE_LIMIT_PER_MIN`); на Envoy — отдельный bucket для `POST /api/v1/auth/refresh`
 
 ## Запуск локально (без Docker)
 
@@ -43,7 +46,7 @@ BFF доступен только внутри docker-сети; снаружи �
 | GET | `/health` | — | healthcheck |
 | POST | `/api/v1/auth/register` | — | регистрация |
 | POST | `/api/v1/auth/login` | — | вход |
-| POST | `/api/v1/auth/refresh` | — | обновление токена |
+| POST | `/api/v1/auth/refresh` | — | новая пара JWT (stateless; см. [shop-auth](../shop-auth/README.md#jwt-stateless-only)) |
 | GET | `/api/v1/auth/me` | ✓ | текущий пользователь |
 | GET | `/api/v1/products` | — | список товаров |
 | GET | `/api/v1/products/{id}` | — | товар |
@@ -74,6 +77,9 @@ BFF доступен только внутри docker-сети; снаружи �
 | `PAYMENT_GRPC_ADDR` | адрес shop-payment (`payment:8086`) |
 | `LOG_LEVEL` | уровень логирования (default `info`) |
 | `CORS_ORIGINS` | allowed origin (default `*`) |
+| `JWT_PUBLIC_KEY_PATH` | PEM Ed25519 public key (как у cart/order) |
+| `AUTH_RATE_LIMIT_PER_MIN` | лимит register/login на IP в минуту (default `30`) |
+| `AUTH_REFRESH_RATE_LIMIT_PER_MIN` | лимит refresh на IP в минуту (default `10`) |
 
 Шаблон для compose: [`env/bff.env.example`](../shop-infra/env/bff.env.example)
 

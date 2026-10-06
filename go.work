@@ -1,0 +1,12 @@
+// Go workspace для локальной разработки backend-сервисов без replace на shop-proto.
+// shop-proto подтягивается из GitHub по require в go.mod каждого сервиса.
+go 1.26.3
+
+use (
+	./shop-auth
+	./shop-catalog
+	./shop-cart
+	./shop-order
+	./shop-payment
+	./shop-BFF
+)

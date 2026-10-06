@@ -5,11 +5,16 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/repeter513/shop-auth/internal/config"
 	authgrpc "github.com/repeter513/shop-auth/internal/grpc"
+	"github.com/repeter513/shop-auth/internal/logx"
 	"github.com/repeter513/shop-auth/internal/repository"
 	"github.com/repeter513/shop-auth/internal/service"
 	authv1 "github.com/repeter513/shop-proto/gen/go/auth/v1"
@@ -25,23 +30,27 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger := logx.New(cfg.LogLevel)
+	slog.SetDefault(logger)
 	ctx := context.Background()
 
 	// Step 2: open PostgreSQL pool and verify connectivity before accepting traffic.
 	// Шаг 2: открытие пула PostgreSQL и проверка соединения до приёма запросов.
 	db, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("db connect", slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer db.Close()
 	if err := db.Ping(ctx); err != nil {
-		log.Fatal("db ping:", err)
+		logger.Error("db ping", slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	// Step 3: JWT signer issues access/refresh tokens; verifier validates incoming RPC auth.
 	// Шаг 3: signer выдаёт access/refresh токены; verifier проверяет JWT во входящих RPC.
-	// Access tokens carry short TTL; refresh tokens enable rotation without re-login (not idempotent — each refresh mints new pair).
-	// Access-токены с коротким TTL; refresh-токены позволяют ротацию без повторного входа (не идемпотентно — каждый refresh выдаёт новую пару).
+	// Stateless JWT only: access short TTL; refresh re-mints a new pair without server-side revocation (old refresh valid until exp).
+	// Только stateless JWT: короткий access; refresh выдаёт новую пару без отзыва на сервере (старый refresh действует до exp).
 	signer := pkgauth.NewSigner(
 		cfg.JWTPrivateKey,
 		cfg.JWTAccessTTL,
@@ -55,13 +64,14 @@ func main() {
 	// Шаг 4: сборка цепочки repository → service → gRPC handler.
 	repo := repository.NewUserRepository(db)
 	auth := service.NewAuthService(repo, signer, verifier)
-	handler := authgrpc.NewHandler(auth)
+	handler := authgrpc.NewHandler(auth, logger)
 
 	// Step 5: bind TCP listener on GRPC_PORT (default from env, e.g. :8081).
 	// Шаг 5: привязка TCP-слушателя к GRPC_PORT (из env, например :8081).
 	lis, err := net.Listen("tcp", cfg.GRPCAddr())
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("listen", slog.String("addr", cfg.GRPCAddr()), slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	// Step 6: unary interceptor validates JWT on protected methods; PublicAuth lists RPCs that skip auth (Register, Login, Validate, Refresh).
@@ -72,8 +82,15 @@ func main() {
 	// Reflection включает introspection для grpcurl/grpcui в dev; безопасно только во внутренней сети.
 	reflection.Register(srv)
 
-	log.Println("gRPC listen", cfg.GRPCAddr())
-	if err := srv.Serve(lis); err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		logger.Info("gRPC listen", slog.String("addr", cfg.GRPCAddr()))
+		if err := srv.Serve(lis); err != nil {
+			logger.Error("gRPC serve", slog.Any("err", err))
+		}
+	}()
+
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	<-ch
+	srv.GracefulStop()
 }

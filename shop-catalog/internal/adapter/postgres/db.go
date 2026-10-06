@@ -20,17 +20,17 @@ type DB struct {
 }
 
 // New opens a connection pool and verifies connectivity.
+// maxConns/minConns come from config (DB_MAX_CONNS / DB_MIN_CONNS); defaults 10/2 per instance.
 // New открывает пул соединений и проверяет подключение.
-func New(ctx context.Context, dsn string) (*DB, error) {
+// maxConns/minConns из config (DB_MAX_CONNS / DB_MIN_CONNS); дефолт 10/2 на инстанс.
+func New(ctx context.Context, dsn string, maxConns, minConns int32) (*DB, error) {
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("parse dsn: %w", err)
 	}
 
-	// Pool tuning: max 10 conns, min 2 warm, 1h max lifetime, 30m idle timeout.
-	// Настройка пула: макс. 10 соединений, мин. 2 warm, lifetime 1ч, idle 30м.
-	cfg.MaxConns = 10
-	cfg.MinConns = 2
+	cfg.MaxConns = maxConns
+	cfg.MinConns = minConns
 	cfg.MaxConnLifetime = time.Hour
 	cfg.MaxConnIdleTime = 30 * time.Minute
 

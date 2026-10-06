@@ -108,27 +108,51 @@ func (h *Handler) ReserveStock(ctx context.Context, req *catalogv1.ReserveStockR
 // Invalid reservation_id string → InvalidArgument before service layer.
 // Невалидная строка reservation_id → InvalidArgument до service слоя.
 func (h *Handler) ReleaseStock(ctx context.Context, req *catalogv1.ReleaseStockRequest) (*catalogv1.ReleaseStockResponse, error) {
-	id, err := strconv.ParseInt(req.GetReservationId(), 10, 64)
+	resID, orderID, err := reservationTarget(req.GetReservationId(), req.GetOrderId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid reservation_id")
+		return nil, err
 	}
-	if err := h.svc.ReleaseStock(ctx, id, nil, 0); err != nil {
+	if err := h.svc.ReleaseStock(ctx, resID, nil, orderID); err != nil {
 		return nil, mapError(err)
 	}
-	return &catalogv1.ReleaseStockResponse{Reservation: &catalogv1.Reservation{ReservationId: req.GetReservationId()}}, nil
+	outID := req.GetReservationId()
+	if outID == "" && orderID != 0 {
+		outID = strconv.FormatInt(orderID, 10)
+	}
+	return &catalogv1.ReleaseStockResponse{Reservation: &catalogv1.Reservation{ReservationId: outID, OrderId: orderID}}, nil
 }
 
 // ConfirmReservation confirms a reservation and deducts physical stock.
 // ConfirmReservation подтверждает резерв и списывает физический остаток.
 func (h *Handler) ConfirmReservation(ctx context.Context, req *catalogv1.ConfirmReservationRequest) (*catalogv1.ConfirmReservationResponse, error) {
-	id, err := strconv.ParseInt(req.GetReservationId(), 10, 64)
+	resID, orderID, err := reservationTarget(req.GetReservationId(), req.GetOrderId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid reservation_id")
+		return nil, err
 	}
-	if err := h.svc.ConfirmReservation(ctx, id, 0); err != nil {
+	if err := h.svc.ConfirmReservation(ctx, resID, orderID); err != nil {
 		return nil, mapError(err)
 	}
-	return &catalogv1.ConfirmReservationResponse{Reservation: &catalogv1.Reservation{ReservationId: req.GetReservationId()}}, nil
+	outID := req.GetReservationId()
+	if outID == "" && orderID != 0 {
+		outID = strconv.FormatInt(orderID, 10)
+	}
+	return &catalogv1.ConfirmReservationResponse{Reservation: &catalogv1.Reservation{ReservationId: outID, OrderId: orderID}}, nil
+}
+
+// reservationTarget resolves release/confirm target: numeric reservation_id or order_id (mutually exclusive).
+// reservationTarget определяет цель release/confirm: reservation_id или order_id (одно из двух).
+func reservationTarget(reservationID string, orderID int64) (int64, int64, error) {
+	if reservationID != "" {
+		id, err := strconv.ParseInt(reservationID, 10, 64)
+		if err != nil || id == 0 {
+			return 0, 0, status.Error(codes.InvalidArgument, "invalid reservation_id")
+		}
+		return id, 0, nil
+	}
+	if orderID != 0 {
+		return 0, orderID, nil
+	}
+	return 0, 0, status.Error(codes.InvalidArgument, "reservation_id or order_id required")
 }
 
 // toProtoReservation maps a domain reservation to protobuf.
@@ -156,7 +180,7 @@ func toProtoProduct(p *domain.Product) *catalogv1.Product {
 		Id:          p.ID,
 		Name:        p.Name,
 		Description: p.Description,
-		Price:       int64(p.Price),
+		Price:       domain.PriceMinorUnits(p.Price),
 		CategoryId:  p.CategoryID,
 		Active:      p.Active,
 	}

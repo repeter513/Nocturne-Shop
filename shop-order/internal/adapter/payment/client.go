@@ -65,3 +65,13 @@ func (c *Client) CreatePayment(ctx context.Context, orderID int64, _, _ int64, _
 	}
 	return resp.GetPaymentId(), nil
 }
+
+// VoidPayment calls PaymentService.VoidPayment when checkout fails after a successful charge.
+// VoidPayment вызывает PaymentService.VoidPayment при сбое checkout после успешного платежа.
+func (c *Client) VoidPayment(ctx context.Context, orderID int64) error {
+	if orderID == 0 {
+		return nil
+	}
+	_, err := c.client.VoidPayment(ctx, &paymentv1.VoidPaymentRequest{OrderId: orderID})
+	return err
+}

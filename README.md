@@ -3,22 +3,34 @@
 Монорепозиторий интернет-магазина **Nocturne**: gRPC-микросервисы на Go, BFF, React-фронт, PostgreSQL, Envoy.  
 Собран для демонстрации — чтобы любой мог быстро поднять весь стек локально.
 
-**Go:** 1.26.3 · **shop-proto:** `v0.2.6` (Ed25519 JWT в `shop-proto/pkg/auth`)
+**Go:** 1.26.3 · **shop-proto (сборка):** [`github.com/repeter513/shop-proto`](https://github.com/repeter513/shop-proto) **v0.2.7** — модуль с GitHub, без `replace` в `go.mod`
 
 ## Структура
 
 ```
 Nocturne/
-├── shop-proto/      gRPC-контракты, сгенерированный Go-код, JWT/interceptor
-├── shop-infra/      Docker Compose, Postgres, Envoy, миграции
-├── shop-auth/       регистрация, логин, выдача JWT
-├── shop-catalog/    каталог, остатки, резервирование
-├── shop-cart/       корзина
-├── shop-order/      заказы (checkout: cart + catalog + payment)
-├── shop-payment/    оплата
-├── shop-BFF/        HTTP JSON API для фронта
-└── shop-web/        React 19 + Vite UI
+├── go.work              # локальная разработка: все backend-модули одним workspace
+├── shop-proto@v0.1.7/   # снимок .proto + docs (имя папки; на сборку не влияет)
+├── shop-infra/          # Docker Compose, Postgres, Envoy, миграции
+├── shop-auth/           # регистрация, логин, выдача JWT
+├── shop-catalog/        # каталог, остатки, резервирование
+├── shop-cart/           # корзина
+├── shop-order/          # заказы (checkout: cart + catalog + payment)
+├── shop-payment/        # оплата
+├── shop-BFF/            # HTTP JSON API для фронта
+└── shop-web/            # React 19 + Vite UI
 ```
+
+Каждый backend — отдельный Go-модуль (`shop-*/go.mod`). Docker-сборка: контекст `../shop-*` относительно `shop-infra/docker-compose.yml`, `go mod download` подтягивает **shop-proto** из GitHub.
+
+### shop-proto: GitHub и папка `shop-proto@v0.1.7`
+
+| | Назначение |
+|---|------------|
+| **`require github.com/repeter513/shop-proto v0.2.7`** в сервисах | Импорты `gen/go/…` и `pkg/auth` при `go build` / Docker |
+| **`shop-proto@v0.1.7/`** в монорепо | Удобно читать `.proto` и README рядом с кодом; версия на GitHub может быть новее снимка в папке |
+
+Обновить зависимость во всех сервисах: `go get github.com/repeter513/shop-proto@vX.Y.Z` в каждом `shop-*` или скриптом по каталогам.
 
 ## Быстрый старт
 
@@ -163,7 +175,7 @@ Access JWT подписывает **shop-auth**, проверяют backend-се
 ## Документация сервисов
 
 - [shop-infra](shop-infra/README.md) — compose, env, миграции, JWT
-- [shop-proto](shop-proto/README.md) — protobuf-контракты, `pkg/auth`
+- [shop-proto@v0.1.7](shop-proto@v0.1.7/README.md) — снимок protobuf и документация; runtime-модуль с [GitHub](https://github.com/repeter513/shop-proto) **v0.2.7**
 - [shop-auth](shop-auth/README.md)
 - [shop-catalog](shop-catalog/README.md)
 - [shop-cart](shop-cart/README.md)
@@ -172,8 +184,17 @@ Access JWT подписывает **shop-auth**, проверяют backend-се
 - [shop-BFF](shop-BFF/README.md)
 - [shop-web](shop-web/README.md)
 
-## Локальная разработка одного сервиса
+## Локальная разработка Go
 
-Каждый backend — отдельный Go-модуль с `Makefile` и `.env.example`.  
-Общий контракт и JWT: [shop-proto](shop-proto/README.md).  
-Для полного стека удобнее `make up` из корня.
+**Workspace (рекомендуется из корня монорепо):**
+
+```bash
+cd Nocturne
+go work sync    # опционально, после смены go.mod
+cd shop-auth && cp .env.example .env   # и остальные shop-* по необходимости
+cd shop-auth && make run               # или go run ./cmd/server
+```
+
+Файл [`go.work`](go.work) перечисляет backend-модули; **shop-proto** в workspace не включён — берётся из module cache / proxy после `go mod download`.
+
+**Один сервис:** `Makefile` + `.env.example` в каталоге сервиса. Контракты в репозитории: [shop-proto@v0.1.7/README.md](shop-proto@v0.1.7/README.md). Полный стек: `make up` из корня.

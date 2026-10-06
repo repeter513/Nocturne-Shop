@@ -1,5 +1,8 @@
 # EN: Docker Compose stack for the shop microservices platform.
 # RU: Docker Compose стек для платформы микросервисов магазина.
+#
+# EN: Monorepo Nocturne — each service build: ../shop-* (service dir as context); shop-proto from GitHub in go.mod.
+# RU: Монорепо — build: ../shop-* (контекст каталога сервиса); shop-proto с GitHub по go.mod.
 
 # EN: Shared JWT public key volume mount used by backend services (read-only at /run/jwt).
 # RU: Общий volume с публичным JWT-ключом для backend-сервисов (read-only в /run/jwt).
@@ -126,6 +129,7 @@ services:
     env_file:
       - ../shop-BFF/.env
       - env/bff.env
+    volumes: *jwt-volumes
     depends_on:
       - auth
       - catalog

@@ -2,7 +2,7 @@
 
 Docker Compose для локального запуска всего магазина: инфра + микросервисы + BFF + web + **Envoy как единая точка входа**.
 
-**Экосистема:** [infra](README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](README.md) · [proto](../shop-proto@v0.1.7/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](../shop-order/README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
 | Компонент | Роль | Доступ с хоста |
 |-----------|------|----------------|
@@ -13,40 +13,39 @@ Docker Compose для локального запуска всего магаз�
 | **Adminer** | UI для PostgreSQL | `:8089` |
 | **Postgres** | БД всех сервисов | `:5432` |
 
-## Структура repos (multi-repo)
+## Структура монорепо (Nocturne)
 
 ```
-../shop-infra
-../shop-proto
-../shop-auth
-../shop-catolog      # shop-catalog
-../shop-cart
-../shop-order
-../shop-payment
-../shop-BFF
-../shop-web
+Nocturne/
+├── shop-proto@v0.1.7/   # снимок .proto (документация; сборка — модуль с GitHub)
+├── shop-infra/          # этот каталог — compose и Envoy
+├── shop-auth/ … shop-web/
 ```
 
-Монорепо: [Nocturne](https://github.com/repeter513/Nocturne)
+Сборка образов: `build: ../shop-*` — контекст каталога сервиса, `Dockerfile` внутри сервиса; `go mod download` тянет **shop-proto** с GitHub (см. `go.mod` сервиса).
 
 ## JWT (Ed25519)
 
 Перед первым `make up` создай ключи (если ещё нет):
 
 ```bash
-mkdir -p ../.shop-keys
-openssl genpkey -algorithm ED25519 -out ../.shop-keys/private.pem
-openssl pkey -in ../.shop-keys/private.pem -pubout -out ../.shop-keys/public.pem
-chmod 600 ../.shop-keys/private.pem
+mkdir -p ~/.shop-keys
+openssl genpkey -algorithm ED25519 -out ~/.shop-keys/private.pem
+openssl pkey -in ~/.shop-keys/private.pem -pubout -out ~/.shop-keys/public.pem
+chmod 600 ~/.shop-keys/private.pem
 ```
 
-В `.env` укажи `JWT_KEYS_DIR=../.shop-keys` (см. `.env.example`) — путь относительно `docker-compose.yml`. Compose монтирует каталог в контейнеры как `/run/jwt/`; в `env/*.env` пути внутри контейнера: `/run/jwt/*.pem`. `~` в compose не раскрывается.
+В `.env` укажи `JWT_KEYS_DIR=~/.shop-keys` (см. `.env.example`). Compose монтирует каталог в контейнеры как `/run/jwt/` — сервисы читают `private.pem` / `public.pem` оттуда.
 
 Подробнее: [shop-auth](../shop-auth/README.md#jwt-ключи-ed25519).
 
+## Rate limit (Envoy)
+
+На HTTP gateway ([`envoy/envoy.yaml`](envoy/envoy.yaml)): отдельные buckets для `POST /api/v1/auth/refresh` и префикса `/api/v1/auth/`; `use_remote_address: true` для корректного IP. Дополнительно [shop-BFF](../shop-BFF/README.md) лимитирует register/login и refresh по IP (`AUTH_*_RATE_LIMIT_PER_MIN` в [`env/bff.env.example`](env/bff.env.example)).
+
 ## Быстрый старт
 
-Перед `make up` нужны Ed25519 ключи (см. выше) и `.env` в sibling-репозиториях (auth, cart, catalog, order, payment, BFF).
+Перед `make up` нужны Ed25519 ключи (см. выше) и `.env` в каталогах сервисов монорепо (`shop-auth`, `shop-cart`, `shop-catalog`, `shop-order`, `shop-payment`, `shop-BFF`) — см. корневой [README](../README.md#3-env-файлы-и-запуск).
 
 ```bash
 make init    # .env здесь + env/*.env из example

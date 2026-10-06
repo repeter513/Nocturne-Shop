@@ -2,9 +2,9 @@
 
 gRPC-сервис заказов: оформление из корзины, резерв стока, оплата / отмена.
 
-**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catolog/README.md) · [cart](../shop-cart/README.md) · [order](README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
+**Экосистема:** [infra](../shop-infra/README.md) · [proto](../shop-proto@v0.1.7/README.md) · [auth](../shop-auth/README.md) · [catalog](../shop-catalog/README.md) · [cart](../shop-cart/README.md) · [order](README.md) · [payment](../shop-payment/README.md) · [bff](../shop-BFF/README.md) · [web](../shop-web/README.md)
 
-Контракт: [shop-proto `order.v1.OrderService`](../shop-proto/proto/order/v1/order.proto) (модуль `v0.2.6`)
+Контракт: [shop-proto `order.v1.OrderService`](../shop-proto@v0.1.7/proto/order/v1/order.proto) · сборка: `github.com/repeter513/shop-proto` **v0.2.7** (GitHub)
 
 Локальный стек: [shop-infra](../shop-infra/README.md) (gRPC порт `8084`, env: [`env/order.env.example`](../shop-infra/env/order.env.example))
 
@@ -15,8 +15,8 @@ gRPC-сервис заказов: оформление из корзины, ре
 | Сервис | Зачем |
 |--------|--------|
 | [shop-cart](../shop-cart/README.md) | `GetCart`, `ClearCart` |
-| [shop-catalog](../shop-catolog/README.md) | `ReserveStock`, `ConfirmReservation`, `ReleaseStock` |
-| [shop-payment](../shop-payment/README.md) | `CreatePayment` |
+| [shop-catalog](../shop-catalog/README.md) | `ReserveStock`, `ConfirmReservation`, `ReleaseStock` |
+| [shop-payment](../shop-payment/README.md) | `CreatePayment`, `VoidPayment` |
 
 ## Checkout flow
 
@@ -31,14 +31,15 @@ CancelOrder (только pending, свой заказ):
   ReleaseStock → UPDATE cancelled
 ```
 
-При ошибке оплаты: `ReleaseStock` + статус `failed` (с `payment_id` если платёж уже создан).
+При ошибке оплаты: `ReleaseStock`, при необходимости `VoidPayment`, статус `failed` (с `payment_id` если платёж уже создан). Catalog release/confirm — по `order_id` (без локального списка `reservation_id`).
 
 ## Стек
 
 - Go 1.26.3
-- gRPC + protobuf ([shop-proto](../shop-proto/README.md))
+- gRPC + protobuf ([shop-proto](../shop-proto@v0.1.7/README.md))
 - PostgreSQL (`pgx`)
-- JWT Ed25519 ([shop-proto `pkg/auth`](../shop-proto/README.md#auth-pkgauth))
+- JWT Ed25519 ([shop-proto `pkg/auth`](../shop-proto@v0.1.7/README.md#auth-pkgauth))
+- Structured JSON logs (`log/slog`, `internal/logx`)
 
 ## Быстрый старт
 
@@ -47,7 +48,7 @@ CancelOrder (только pending, свой заказ):
 - Go 1.26+
 - PostgreSQL (`order_db`)
 - Ed25519 `public.pem`
-- Запущенные [cart](../shop-cart/README.md) (`8083`), [catalog](../shop-catolog/README.md) (`8082`), [payment](../shop-payment/README.md) (`8086`)
+- Запущенные [cart](../shop-cart/README.md) (`8083`), [catalog](../shop-catalog/README.md) (`8082`), [payment](../shop-payment/README.md) (`8086`)
 
 ### Конфигурация
 

@@ -39,9 +39,7 @@ func cors(origins string) func(http.Handler) http.Handler {
 // requireAuth отклоняет запросы без Bearer-токена.
 //
 // This is a lightweight gate: it only checks header presence/format.
-// Full JWT validation happens in the auth gRPC service (ValidateToken).
-// Это лёгкий шлюз: проверяется только наличие/формат заголовка.
-// Полная валидация JWT выполняется в gRPC-сервисе auth (ValidateToken).
+// Full JWT signature check runs in handlers via public.pem (not auth ValidateToken RPC).
 func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")

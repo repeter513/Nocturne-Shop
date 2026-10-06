@@ -238,6 +238,9 @@ func orderItemsToCartItems(items []domain.OrderItem) []cart.Item {
 // failOrder помечает заказ как failed и освобождает резервирования.
 func (s *OrderService) failOrder(ctx context.Context, orderID int64, reserved []cart.Item, paymentID int64) {
 	s.releaseReserved(ctx, orderID, reserved)
+	if paymentID != 0 {
+		_ = s.payment.VoidPayment(ctx, orderID)
+	}
 	_ = s.repo.UpdateStatus(ctx, orderID, domain.OrderStatusFailed, paymentID)
 }
 

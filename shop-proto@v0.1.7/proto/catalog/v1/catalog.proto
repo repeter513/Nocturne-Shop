@@ -127,6 +127,7 @@ message ReserveStockResponse {
 
 message ReleaseStockRequest {
   string reservation_id = 1;
+  int64 order_id = 2;
 }
 
 message ReleaseStockResponse {
@@ -135,6 +136,7 @@ message ReleaseStockResponse {
 
 message ConfirmReservationRequest {
   string reservation_id = 1;
+  int64 order_id = 2;
 }
 
 message ConfirmReservationResponse {

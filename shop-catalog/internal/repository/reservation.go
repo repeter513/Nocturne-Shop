@@ -19,8 +19,8 @@ type ReservationRepository interface {
 
 // AtomicStockManager performs reserve, release, and confirm in database transactions.
 // AtomicStockManager выполняет резерв, снятие и подтверждение в транзакциях БД.
-// Model A: product.stock is physical; active reservations reduce available only.
-// Модель A: product.stock — физический остаток; активные резервы уменьшают только доступное.
+// Model A: product.stock is physical; holding reservations reduce available only.
+// Модель A: product.stock — физический остаток; удерживающие резервы уменьшают только доступное.
 type AtomicStockManager interface {
 	// ReserveWithTransaction is idempotent per order_id: merges into existing active reservation.
 	// ReserveWithTransaction идемпотентен по order_id: объединяет с существующим активным резервом.

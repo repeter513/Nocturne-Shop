@@ -5,9 +5,12 @@ package grpc
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/repeter513/shop-auth/internal/logx"
 	"github.com/repeter513/shop-auth/internal/service"
+	"github.com/repeter513/shop-auth/internal/validation"
 	authv1 "github.com/repeter513/shop-proto/gen/go/auth/v1"
 	pkgauth "github.com/repeter513/shop-proto/pkg/auth"
 	"google.golang.org/grpc/codes"
@@ -21,18 +24,22 @@ type Handler struct {
 	// auth contains registration, login, JWT validate/refresh, and profile logic.
 	// auth содержит логику регистрации, входа, validate/refresh JWT и профиля.
 	auth *service.AuthService
+	log  *slog.Logger
 }
 
 // NewHandler creates a gRPC handler backed by AuthService.
 // NewHandler создаёт gRPC-обработчик на базе AuthService.
-func NewHandler(auth *service.AuthService) *Handler {
-	return &Handler{auth: auth}
+func NewHandler(auth *service.AuthService, log *slog.Logger) *Handler {
+	if log == nil {
+		log = slog.Default()
+	}
+	return &Handler{auth: auth, log: log}
 }
 
 // RegisterUser creates a new user account.
 // RegisterUser создаёт новую учётную запись пользователя.
-// Public RPC (no JWT). Duplicate email → Internal (DB unique violation), not AlreadyExists.
-// Публичный RPC (без JWT). Повторный email → Internal (unique violation в БД), не AlreadyExists.
+// Public RPC (no JWT). Duplicate email → AlreadyExists; other errors → Internal (details logged server-side).
+// Публичный RPC (без JWT). Повторный email → AlreadyExists; прочие ошибки → Internal (детали только в логе).
 func (h *Handler) RegisterUser(
 	ctx context.Context,
 	req *authv1.RegisterUserRequest,
@@ -43,7 +50,14 @@ func (h *Handler) RegisterUser(
 		req.GetPassword(),
 	)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		if errors.Is(err, validation.ErrInvalidInput) {
+			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
+		}
+		if errors.Is(err, service.ErrEmailAlreadyExists) {
+			return nil, status.Error(codes.AlreadyExists, "email already registered")
+		}
+		logx.LogHandlerErr(h.log, "RegisterUser", err)
+		return nil, status.Error(codes.Internal, "registration failed")
 	}
 	return &authv1.RegisterUserResponse{UserId: id}, nil
 }
@@ -64,10 +78,14 @@ func (h *Handler) LoginUser(
 		req.GetPassword(),
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) || err.Error() == "invalid credentials" {
+		if errors.Is(err, validation.ErrInvalidInput) {
+			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
+		}
+		if errors.Is(err, service.ErrInvalidCredentials) {
 			return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 		}
-		return nil, status.Error(codes.Internal, err.Error())
+		logx.LogHandlerErr(h.log, "LoginUser", err)
+		return nil, status.Error(codes.Internal, "login failed")
 	}
 	return &authv1.LoginUserResponse{
 		AccessToken:  access,
@@ -127,7 +145,8 @@ func (h *Handler) GetUserInfo(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
-		return nil, status.Error(codes.Internal, err.Error())
+		logx.LogHandlerErr(h.log, "GetUserInfo", err)
+		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &authv1.GetUserInfoResponse{
 		User: &authv1.User{Id: u.ID, Email: u.Email},

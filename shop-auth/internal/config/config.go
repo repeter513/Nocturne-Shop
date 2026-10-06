@@ -33,8 +33,8 @@ type Config struct {
 	// JWTAccessTTL is access token lifetime (env: JWT_ACCESS_TTL, e.g. "15m").
 	// JWTAccessTTL — время жизни access-токена (env: JWT_ACCESS_TTL, например "15m").
 	JWTAccessTTL time.Duration
-	// JWTRefreshTTL is refresh token lifetime (env: JWT_REFRESH_TTL, e.g. "168h").
-	// JWTRefreshTTL — время жизни refresh-токена (env: JWT_REFRESH_TTL, например "168h").
+	// JWTRefreshTTL is refresh token lifetime (env: JWT_REFRESH_TTL, e.g. "72h"; stateless — no early revoke).
+	// JWTRefreshTTL — время жизни refresh-токена (env: JWT_REFRESH_TTL, например "72h"; stateless — без досрочного отзыва).
 	JWTRefreshTTL time.Duration
 	// LogLevel controls structured log verbosity (env: LOG_LEVEL, required, e.g. "info").
 	// LogLevel задаёт уровень логирования (env: LOG_LEVEL, обязателен, например "info").

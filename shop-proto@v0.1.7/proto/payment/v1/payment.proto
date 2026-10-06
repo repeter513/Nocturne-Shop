@@ -22,6 +22,8 @@ service PaymentService {
   // ListPayments returns paginated payments, optionally filtered by order_id.
   // ListPayments возвращает постраничные платежи с опциональным фильтром order_id.
   rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse);
+
+  rpc VoidPayment(VoidPaymentRequest) returns (VoidPaymentResponse);
 }
 
 enum PaymentStatus {
@@ -73,4 +75,12 @@ message ListPaymentsRequest {
 message ListPaymentsResponse {
   repeated Payment payments = 1;
   int32 total_count = 2;
+}
+
+message VoidPaymentRequest {
+  int64 order_id = 1;
+}
+
+message VoidPaymentResponse {
+  Payment payment = 1;
 }

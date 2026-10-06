@@ -102,3 +102,22 @@ func (s *PaymentService) List(
 	}
 	return s.repo.List(ctx, userID, orderID, page, pageSize)
 }
+
+// Void voids the SUCCESS payment for orderID after ownership check (used by shop-order on failOrder).
+// Void отменяет платёж SUCCESS для orderID после проверки владельца (вызывает shop-order при failOrder).
+func (s *PaymentService) Void(ctx context.Context, orderID int64, userID int) (*domain.Payment, error) {
+	if orderID == 0 {
+		return nil, domain.ErrOrderIDRequired
+	}
+	if userID == 0 {
+		return nil, domain.ErrUserIDRequired
+	}
+	p, err := s.repo.MarkFailedByOrderID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if p.UserID != int64(userID) {
+		return nil, domain.ErrPaymentNotFound
+	}
+	return p, nil
+}

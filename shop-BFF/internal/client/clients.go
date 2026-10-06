@@ -18,8 +18,7 @@ import (
 // Clients holds gRPC stubs for all backend microservices.
 // Clients хранит gRPC-стабы всех backend-микросервисов.
 type Clients struct {
-	// Auth handles RegisterUser, LoginUser, RefreshToken, ValidateToken, GetUserInfo.
-	// Auth обрабатывает RegisterUser, LoginUser, RefreshToken, ValidateToken, GetUserInfo.
+	// Auth handles RegisterUser, LoginUser, RefreshToken, GetUserInfo.
 	Auth authv1.AuthServiceClient
 
 	// Catalog handles ListProducts, GetProduct, GetStock, ListCategories.

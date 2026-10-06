@@ -5,10 +5,13 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/repeter513/shop-catalog/internal/domain"
 )
 
@@ -64,7 +67,8 @@ func (m *StockManager) ReserveWithTransaction(
 
 		// Step 2: new reservation — lock each product and verify available >= qty.
 		// Шаг 2: новый резерв — блокировка каждого товара и проверка available >= qty.
-		for productID, qty := range items {
+		for _, productID := range sortedProductIDs(items) {
+			qty := items[productID]
 			if qty <= 0 {
 				return domain.ErrInsufficientStock
 			}
@@ -87,12 +91,28 @@ func (m *StockManager) ReserveWithTransaction(
 		if err != nil {
 			return err
 		}
-		return tx.QueryRow(ctx, `
+		if err := tx.QueryRow(ctx, `
 			INSERT INTO stock_reservations (order_id, items, status, expires_at)
 			VALUES ($1, $2, $3, $4)
 			RETURNING id, created_at`,
 			orderID, itemsJSON, reservation.Status, reservation.ExpiresAt,
-		).Scan(&reservation.ID, &reservation.CreatedAt)
+		).Scan(&reservation.ID, &reservation.CreatedAt); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				existing, selErr := m.res.scanOne(ctx, tx, `
+					SELECT id, order_id, items, status, expires_at, created_at
+					FROM stock_reservations WHERE order_id = $1 FOR UPDATE`, orderID)
+				if selErr != nil {
+					return selErr
+				}
+				if existing == nil {
+					return err
+				}
+				return m.mergeReservation(ctx, tx, existing, items, ttlSeconds, reservation)
+			}
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -112,7 +132,7 @@ func (m *StockManager) mergeReservation(
 	ttlSeconds int32,
 	out *domain.StockReservation,
 ) error {
-	if existing.Status != domain.ReservationActive {
+	if existing.Status != domain.ReservationActive && existing.Status != domain.ReservationPartiallyReleased {
 		return fmt.Errorf("order %d reservation is not active", existing.OrderID)
 	}
 	if existing.ExpiresAt.Before(time.Now()) {
@@ -123,7 +143,8 @@ func (m *StockManager) mergeReservation(
 	for productID, qty := range existing.Items {
 		merged[productID] = qty
 	}
-	for productID, qty := range items {
+	for _, productID := range sortedProductIDs(items) {
+		qty := items[productID]
 		if qty <= 0 {
 			return domain.ErrInsufficientStock
 		}
@@ -259,4 +280,13 @@ func (m *StockManager) ConfirmWithTransaction(ctx context.Context, reservationID
 		}
 		return nil
 	})
+}
+
+func sortedProductIDs(items map[int64]int32) []int64 {
+	ids := make([]int64, 0, len(items))
+	for id := range items {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return ids
 }

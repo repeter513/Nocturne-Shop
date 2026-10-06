@@ -123,3 +123,32 @@ func (r *PaymentRepo) List(
 	}
 	return out, total, rows.Err()
 }
+
+// MarkFailedByOrderID sets SUCCESS → FAILED for order_id; if already non-success, returns current row.
+// MarkFailedByOrderID переводит SUCCESS → FAILED по order_id; иначе возвращает существующую строку.
+func (r *PaymentRepo) MarkFailedByOrderID(ctx context.Context, orderID int64) (*domain.Payment, error) {
+	var p domain.Payment
+	err := r.db.Pool().QueryRow(ctx, `
+		UPDATE payments SET status = $2
+		WHERE order_id = $1 AND status = $3
+		RETURNING id, order_id, user_id, amount, status, created_at`,
+		orderID, domain.PaymentStatusFailed, domain.PaymentStatusSuccess,
+	).Scan(&p.ID, &p.OrderID, &p.UserID, &p.Amount, &p.Status, &p.CreatedAt)
+	if err == nil {
+		return &p, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, err
+	}
+	err = r.db.Pool().QueryRow(ctx, `
+		SELECT id, order_id, user_id, amount, status, created_at
+		FROM payments WHERE order_id = $1`, orderID,
+	).Scan(&p.ID, &p.OrderID, &p.UserID, &p.Amount, &p.Status, &p.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrPaymentNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}

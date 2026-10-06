@@ -130,3 +130,14 @@ const (
 	// ReservationPartiallyReleased означает частичное снятие резерва.
 	ReservationPartiallyReleased ReservationStatus = "partially_released"
 )
+
+// ReservationHoldsStock reports whether the reservation still reduces available stock.
+// ReservationHoldsStock сообщает, уменьшает ли резерв ещё доступный остаток.
+func ReservationHoldsStock(status ReservationStatus) bool {
+	switch status {
+	case ReservationActive, ReservationPartiallyReleased:
+		return true
+	default:
+		return false
+	}
+}

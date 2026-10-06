@@ -1,4 +1,5 @@
-.PHONY: up down infra-up migrate logs seed env init
+# shop-infra — Docker Compose: Postgres, микросервисы, BFF, web, Envoy.
+.PHONY: up down infra-up migrate logs seed env init envoy-reload
 
 up: env
 	docker compose up -d --build

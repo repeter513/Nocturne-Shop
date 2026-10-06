@@ -20,4 +20,5 @@ type PaymentRepository interface {
 	// List returns a paginated, filtered list of payments and the total count.
 	// List возвращает постраничный отфильтрованный список платежей и общее количество.
 	List(ctx context.Context, userID, orderID int64, page, pageSize int32) ([]domain.Payment, int32, error)
+	MarkFailedByOrderID(ctx context.Context, orderID int64) (*domain.Payment, error)
 }
