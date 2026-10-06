@@ -17,10 +17,14 @@ import type {
 // Base URL from env or same-origin proxy (Vite dev proxy → BFF :8090). / Базовый URL из env или прокси того же origin (Vite dev proxy → BFF :8090).
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
-// protojson serializes int64 as strings; UI expects numbers for .toFixed etc. / protojson сериализует int64 как строки; UI ожидает числа для .toFixed и т.п.
-const NUMERIC_KEYS = new Set(['price', 'totalPrice', 'amount'])
+// Proto money fields are int64 kopecks; UI uses rubles. / Денежные поля proto — int64 копеек; UI — рубли.
+const MONEY_MINOR_KEYS = new Set(['price', 'totalPrice', 'amount'])
 
-// Recursively converts protojson string numbers to JS numbers. / Рекурсивно преобразует строковые числа protojson в числа JS.
+function minorUnitsToRubles(raw: string | number): number {
+  return Number(raw) / 100
+}
+
+// Recursively normalizes protojson (int64 strings → numbers, kopecks → rubles). / Нормализует protojson (строки int64 → числа, копейки → рубли).
 function normalizeProtoJson<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map((item) => normalizeProtoJson(item)) as T
@@ -28,8 +32,11 @@ function normalizeProtoJson<T>(value: T): T {
   if (value !== null && typeof value === 'object') {
     const out: Record<string, unknown> = {}
     for (const [key, val] of Object.entries(value)) {
-      out[key] =
-        typeof val === 'string' && NUMERIC_KEYS.has(key) ? Number(val) : normalizeProtoJson(val)
+      if (MONEY_MINOR_KEYS.has(key) && (typeof val === 'string' || typeof val === 'number')) {
+        out[key] = minorUnitsToRubles(val)
+      } else {
+        out[key] = normalizeProtoJson(val)
+      }
     }
     return out as T
   }

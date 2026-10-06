@@ -28,7 +28,7 @@ export interface Product {
   name: string
   // Full description (may contain \n\n paragraphs). / Полное описание (может содержать абзацы \n\n).
   description: string
-  // Unit price in rubles (normalized from protojson string). / Цена за единицу в рублях (нормализована из protojson-строки).
+  // Unit price in rubles (api client converts proto kopecks). / Цена за единицу в рублях (клиент делит копейки proto на 100).
   price: number
   // Category foreign key. / Внешний ключ категории.
   categoryId: string
@@ -62,7 +62,7 @@ export interface CartItem {
   quantity: number
   // Denormalized product name for display. / Денормализованное название для отображения.
   name: string
-  // Unit price at time of add. / Цена за единицу на момент добавления.
+  // Unit price in rubles at time of add. / Цена за единицу в рублях на момент добавления.
   price: number
 }
 
@@ -72,7 +72,7 @@ export interface Cart {
   userId: string
   // Line items. / Позиции.
   items: CartItem[]
-  // Sum of line totals. / Сумма по позициям.
+  // Cart total in rubles. / Итог корзины в рублях.
   totalPrice: number
 }
 
@@ -92,7 +92,7 @@ export interface OrderItem {
   quantity: number
   // Snapshot of product name. / Снимок названия товара.
   name: string
-  // Snapshot of unit price. / Снимок цены за единицу.
+  // Snapshot of unit price in rubles. / Снимок цены за единицу в рублях.
   price: number
 }
 
@@ -129,7 +129,7 @@ export interface Payment {
   orderId: string
   // Payer user ID. / ID плательщика.
   userId: string
-  // Charged amount in rubles. / Списанная сумма в рублях.
+  // Charged amount in rubles (from proto kopecks). / Списанная сумма в рублях (из копеек proto).
   amount: number
   // Payment processing status. / Статус обработки платежа.
   status: PaymentStatus
